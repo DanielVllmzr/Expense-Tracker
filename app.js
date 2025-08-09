@@ -288,3 +288,54 @@ if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigato
 populateCategories();
 drawChips();
 render();
+
+
+// --- Pull to refresh (v2.5) ---
+(function(){
+  const ptr = document.getElementById('ptr');
+  const bubble = ptr.querySelector('.bubble');
+  let startY = 0, pulling = false, pulled = 0, threshold = 70;
+
+  window.addEventListener('touchstart', (e)=>{
+    if (document.scrollingElement.scrollTop === 0) {
+      startY = e.touches[0].clientY;
+      pulling = true; pulled = 0;
+    }
+  }, {passive:true});
+
+  window.addEventListener('touchmove', (e)=>{
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0) {
+      pulled = Math.min(dy, 120);
+      ptr.style.transform = `translateY(${pulled/3}px)`;
+      ptr.classList.add('show');
+      if (pulled > threshold) {
+        bubble.textContent = '✓';
+      } else {
+        bubble.textContent = '↻';
+      }
+    }
+  }, {passive:true});
+
+  window.addEventListener('touchend', async ()=>{
+    if (!pulling) return;
+    pulling = false;
+    ptr.style.transform = '';
+    if (pulled > threshold) {
+      ptr.classList.add('spin');
+      // Try to update SW and reload, else soft re-render
+      try {
+        if (navigator.serviceWorker?.controller) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r=>r.update()));
+        }
+      } catch(e){}
+      setTimeout(()=>{ location.reload(); }, 300);
+    } else {
+      ptr.classList.remove('show');
+    }
+    setTimeout(()=>{ ptr.classList.remove('spin'); ptr.classList.remove('show'); }, 600);
+  });
+})();
+

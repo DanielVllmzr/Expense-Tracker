@@ -61,3 +61,45 @@ canvas{width:100%;height:220px;background:#0f1116;border-radius:12px;border:1px 
 .centered { width:100%; }
 .form .full input[type="date"] { width:100%; text-align:center; }
 .date-inline { background:#0f1116;color:#e9edf5;border:1px solid var(--border);border-radius:8px;padding:6px 8px; }
+
+/* v2.4 tweaks */
+/* Remove sticky behavior to avoid freeze-on-scroll */
+header{ position: static; top:auto; }
+/* Make date input and 'Hoy' look/size-matched */
+.btn-inline{ background:#0f1116; color:#e9edf5; border:1px solid var(--border); border-radius:8px; padding:6px 10px; height:36px; display:inline-flex; align-items:center; }
+.topbar .right input[type="date"]{ height:36px; padding:6px 10px; }
+.topbar .right .btn-inline{ min-width:64px; text-align:center; justify-content:center; }
+/* Align 'Fecha del registro' block */
+.form .full.centered{ display:flex; flex-direction:column; align-items:center; }
+.form .full.centered input[type="date"]{ max-width:260px; }
+.form .full.centered label{ align-self:flex-start; }
+/* Tighten extra margin below chips section */
+#chips{ margin-bottom:8px; }
+
+/* v2.5 Pull-to-refresh */
+.ptr {
+  position: fixed;
+  top: 0;
+  left: 0; right: 0;
+  height: 0px;
+  overflow: visible;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+}
+.ptr .bubble{
+  margin-top: 8px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  opacity: 0;
+  transition: opacity .15s ease;
+  background:#0f1116;
+  color: var(--muted);
+  font-size: 12px;
+}
+.ptr.show .bubble{ opacity: 1; }
+.ptr.spin .bubble{ animation: spin 1s linear infinite; border-color: var(--accent); }
+@keyframes spin { from{ transform: rotate(0); } to{ transform: rotate(360deg); } }
