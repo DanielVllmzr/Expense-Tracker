@@ -30,7 +30,6 @@ function formatMoney(n){ const val=Number(n||0); return '$'+val.toLocaleString(u
 // UI refs
 const amountEl=document.getElementById('amount');
 const categoryEl=document.getElementById('category');
-const entryDateEl=document.getElementById('entryDate');
 const addBtn=document.getElementById('addBtn');
 const filterBtn=document.getElementById('filterBtn');
 const exportBtn=document.getElementById('exportBtn');
@@ -85,12 +84,11 @@ segExpense.onclick=()=>{ addType='expense'; segExpense.classList.add('active'); 
 segIncome.onclick=()=>{ addType='income'; segIncome.classList.add('active'); segExpense.classList.remove('active'); };
 
 // Add record with custom date
-entryDateEl.value = meta.selectedDate;
 addBtn.onclick=()=>{
   const amount=parseFloat(amountEl.value);
   if(isNaN(amount)) return;
   const cat = categoryEl.value || 'otros';
-  const ymd = entryDateEl.value || todayYMD();
+  const ymd = meta.selectedDate || todayYMD();
   const at = new Date(ymd+'T12:00:00'); // noon to avoid TZ edge cases
   const rec={ id:crypto.randomUUID(), amount:Math.abs(amount), category:cat, type:addType, createdAt:at.toISOString() };
   records.unshift(rec); save();
