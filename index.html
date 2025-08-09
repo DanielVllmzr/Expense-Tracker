@@ -14,19 +14,19 @@
 </head>
 <body>
 <header>
-  <h1>Gastos</h1>
-  <div class="summary card">
-    <div>
-      <div class="period" id="period">Día: —</div>
+  <div class="topbar">
+    <h1>Gastos</h1>
+    <div class="right">
+      <input id="datePicker" class="date-inline" type="date">
+      <button class="ghost" id="todayBtn">Hoy</button>
     </div>
+  </div>
+  <div class="summary card">
+    <div class="period" id="period">Día: —</div>
     <div class="totals">
       <div class="totalBox"><div class="label">Gastos</div><div class="value" id="totExpenses">$0</div></div>
       <div class="totalBox"><div class="label">Ingresos</div><div class="value" id="totIncomes">$0</div></div>
       <div class="totalBox"><div class="label">Neto</div><div class="value" id="totNet">$0</div></div>
-    </div>
-    <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-      <input id="datePicker" type="date" style="background:#0f1116;color:#e9edf5;border:1px solid var(--border);border-radius:8px;padding:8px;">
-      <button class="ghost" id="todayBtn">Hoy</button>
     </div>
   </div>
 
@@ -43,9 +43,9 @@
       <label for="category" class="small">Categoría</label>
       <select id="category"></select>
     </div>
-    <div>
+    <div class="full centered">
       <label for="entryDate" class="small">Fecha del registro</label>
-      <input id="entryDate" type="date" />
+      <input id="entryDate" class="centered" type="date" />
     </div>
     <div class="actions" style="grid-column: 1 / -1;">
       <button class="primary" id="addBtn">Agregar</button>

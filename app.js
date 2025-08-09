@@ -183,8 +183,9 @@ function drawBarsVertical(items){
   const pad=20*devicePixelRatio; const labelH=30*devicePixelRatio;
   const maxVal=Math.max(...entries.map(([,v])=>v));
   const innerH = h - pad*2 - labelH;
-  const barW = Math.max(12*devicePixelRatio, (w - pad*2) / (entries.length*1.3));
-  const gap = barW*0.3;
+  const approxChar = 8*devicePixelRatio; // ~8px per char
+  const barW = Math.max(10*devicePixelRatio, approxChar*6);
+  const gap = 8*devicePixelRatio;
   let x = pad + ( (w - pad*2) - (entries.length*(barW+gap)-gap) )/2;
 
   ctx.font=`${11*devicePixelRatio}px -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, Arial`;
