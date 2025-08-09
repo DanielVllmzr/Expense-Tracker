@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gastos Rápidos</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0c0f">
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>Gastos</h1>
+  <div class="summary card">
+    <div>
+      <div class="total" id="total">$0</div>
+      <div class="period" id="period">Ciclo: —</div>
+    </div>
+  </div>
+
+  <div class="form">
+    <div>
+      <label for="amount" class="small">Monto (USD)</label>
+      <input id="amount" type="number" inputmode="decimal" step="0.01" placeholder="0.00" />
+    </div>
+    <div class="select-wrap">
+      <label for="category" class="small">Categoría</label>
+      <select id="category"></select>
+    </div>
+    <div class="actions" style="grid-column: 1 / -1;">
+      <button class="primary" id="addBtn">Agregar</button>
+      <button class="ghost" id="filterBtn">Filtrar</button>
+      <button class="ghost" id="exportBtn">Exportar CSV</button>
+    </div>
+  </div>
+
+  <div class="chips" id="chips"></div>
+</header>
+
+<div class="container">
+  <div class="section">
+    <h2>Gastos del ciclo</h2>
+    <div class="list" id="list"></div>
+  </div>
+
+  <div class="section">
+    <h2>Distribución por categoría</h2>
+    <canvas id="pie"></canvas>
+  </div>
+
+  <div class="section">
+    <h2>Ajustes</h2>
+    <div class="settings-row">
+      <span class="small">Recordatorio diario para anotar gastos</span>
+      <label><input type="checkbox" id="remindersToggle"> Habilitar</label>
+    </div>
+    <div class="small" id="budgetNote">Sugerencias de presupuesto disponibles tras 30 días de historial.</div>
+    <div class="settings-row">
+      <span class="small">Cerrar ciclo y comenzar uno nuevo</span>
+      <button class="danger" id="closeCycleBtn">Cerrar ciclo</button>
+    </div>
+  </div>
+</div>
+
+<footer class="nav">
+  <button id="showAll">Todos</button>
+  <button id="showIncome">Ingresos</button>
+  <button id="showExpense">Gastos</button>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
