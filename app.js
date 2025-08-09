@@ -90,7 +90,11 @@ addBtn.onclick=()=>{
   if(isNaN(amount)) return;
   const cat = categoryEl.value || 'otros';
   const ymd = meta.selectedDate || todayYMD();
-  const at = new Date(ymd+'T12:00:00'); // noon to avoid TZ edge cases
+const now = new Date();
+const [yy, mm, dd] = ymd.split('-').map(Number);
+const at = new Date(now);
+at.setFullYear(yy, (mm or 1)-1, dd or 1);
+// noon to avoid TZ edge cases
   const rec={ id:crypto.randomUUID(), amount:Math.abs(amount), category:cat, type:addType, createdAt:at.toISOString() };
   records.unshift(rec); save();
   amountEl.value=''; // keep date/cat
@@ -368,3 +372,5 @@ try{
   records.forEach(r=>{ if(!r.category){ r.category='otros'; changed++; }});
   if(changed){ save(); }
 }catch(e){}
+
+// App version: v2.8.2
