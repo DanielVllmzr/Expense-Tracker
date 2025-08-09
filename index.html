@@ -14,20 +14,23 @@
 </head>
 <body>
 <div class="ptr" id="ptr"><div class="bubble">↻</div></div>
+
 <header>
   <div class="topbar">
     <h1>Gastos</h1>
     <div class="right">
-      <input id="datePicker" class="date-inline" type="date">
-      <button class="ghost btn-inline" id="todayBtn">Hoy</button>
+      <input id="datePicker" class="control" type="date">
+      <button class="control" id="todayBtn">Hoy</button>
     </div>
   </div>
-  <div class="summary card">
-    <div class="period" id="period">Día: —</div>
-    <div class="totals">
-      <div class="totalBox"><div class="label">Gastos</div><div class="value" id="totExpenses">$0</div></div>
-      <div class="totalBox"><div class="label">Ingresos</div><div class="value" id="totIncomes">$0</div></div>
-      <div class="totalBox"><div class="label">Neto</div><div class="value" id="totNet">$0</div></div>
+  <div class="summary">
+    <div class="card">
+      <div class="period" id="period">Día: —</div>
+      <div class="totals">
+        <div class="totalBox"><div class="label">Gastos</div><div class="value" id="totExpenses">$0</div></div>
+        <div class="totalBox"><div class="label">Ingresos</div><div class="value" id="totIncomes">$0</div></div>
+        <div class="totalBox"><div class="label">Neto</div><div class="value" id="totNet">$0</div></div>
+      </div>
     </div>
   </div>
 
@@ -37,14 +40,14 @@
       <button id="segIncome">Ingreso</button>
     </div>
     <div>
-      <label for="amount" class="small">Monto (USD)</label>
+      <label class="small">Monto (USD)</label>
       <input id="amount" type="number" inputmode="decimal" step="0.01" placeholder="0.00" />
     </div>
     <div class="select-wrap">
-      <label for="category" class="small">Categoría</label>
+      <label class="small">Categoría</label>
       <select id="category"></select>
     </div>
-<div class="actions" style="grid-column: 1 / -1;">
+    <div class="actions" style="grid-column:1/-1;">
       <button class="primary" id="addBtn">Agregar</button>
       <button class="ghost" id="filterBtn">Filtrar</button>
       <button class="ghost" id="exportBtn">Exportar CSV</button>
@@ -78,8 +81,11 @@
         <option value="horizontal">Horizontal</option>
       </select>
     </div>
+    <div class="settings-row">
+      <span class="small">Corregir horas 12:00 PM en registros existentes</span>
+      <button class="ghost" id="normalizeBtn">Normalizar</button>
+    </div>
     <div class="small" id="budgetNote">Sugerencias de presupuesto disponibles tras 30 días de historial.</div>
-    <div class="small">Usá el selector de fecha para ver días anteriores.</div>
   </div>
 </div>
 
@@ -89,6 +95,6 @@
   <button id="showExpense">Gastos</button>
 </footer>
 
-<script src="app.js"></script>
+<script src="app.js?v=29"></script>
 </body>
 </html>

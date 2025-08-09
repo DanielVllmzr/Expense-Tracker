@@ -1,7 +1,7 @@
 
-// Storage and constants
+// Storage & constants
 const LS_KEY='gastos.records.v1';
-const META_KEY='gastos.meta.v3';
+const META_KEY='gastos.meta.v4';
 const DEFAULT_CATS=[
   {key:'todas',name:'Todas',color:'#28b487'},
   {key:'comida',name:'Comida',color:'#2ca58d'},
@@ -18,14 +18,19 @@ const DEFAULT_CATS=[
 let records = JSON.parse(localStorage.getItem(LS_KEY)||'[]');
 let meta = JSON.parse(localStorage.getItem(META_KEY)||'{}');
 if(!meta.selectedDate){ meta.selectedDate = todayYMD(); }
+if(!meta.chartOrientation){ meta.chartOrientation='vertical'; }
 save();
+migrateRecords();
 
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(records)); localStorage.setItem(META_KEY, JSON.stringify(meta)); }
-function nowISO(){ return new Date().toISOString(); }
 function toYMD(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
 function todayYMD(){ return toYMD(new Date()); }
 function localYMDfromISO(iso){ return toYMD(new Date(iso)); }
 function formatMoney(n){ const val=Number(n||0); return '$'+val.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function migrateRecords(){ // ensure categories not null
+  records.forEach(r=>{ if(!r.category) r.category='otros'; if(r.type!=='income' && r.type!=='expense') r.type='expense'; });
+  save();
+}
 
 // UI refs
 const amountEl=document.getElementById('amount');
@@ -49,21 +54,18 @@ const segIncome=document.getElementById('segIncome');
 const totExpenses=document.getElementById('totExpenses');
 const totIncomes=document.getElementById('totIncomes');
 const totNet=document.getElementById('totNet');
-
-
-const chartOrientation = document.getElementById('chartOrientation');
-if(!meta.chartOrientation){ meta.chartOrientation = 'vertical'; save(); }
-chartOrientation.value = meta.chartOrientation;
-chartOrientation.onchange = () => { meta.chartOrientation = chartOrientation.value; save(); render(); };
+const chartOrientation=document.getElementById('chartOrientation');
+const normalizeBtn=document.getElementById('normalizeBtn');
 
 // Filters
 let activeCat=null;
 let typeFilter='all';
-let addType='expense'; // default
+let addType='expense';
 
-// Init categories
+// Populate categories
 function populateCategories(){
-  DEFAULT_CATS.slice(1).forEach(c=>{ // skip 'todas' in dropdown
+  categoryEl.innerHTML='';
+  DEFAULT_CATS.slice(1).forEach(c=>{
     const opt=document.createElement('option'); opt.value=c.key; opt.textContent=c.name; categoryEl.appendChild(opt);
   });
 }
@@ -75,29 +77,29 @@ function chipEl(label,key,color){
   const div=document.createElement('div');
   div.className='chip';
   div.innerHTML=`<span class="dot" style="background:${color}"></span>${label}`;
-  div.onclick=()=>{ activeCat = (key==='todas'?null:key); render(); };
+  div.onclick=()=>{ activeCat=(key==='todas'?null:key); render(); };
   return div;
 }
 
-// Segment buttons
+// Segment
 segExpense.onclick=()=>{ addType='expense'; segExpense.classList.add('active'); segIncome.classList.remove('active'); };
 segIncome.onclick=()=>{ addType='income'; segIncome.classList.add('active'); segExpense.classList.remove('active'); };
 
-// Add record with custom date
+// Add record (use current time, keep selected day)
 addBtn.onclick=()=>{
   const amount=parseFloat(amountEl.value);
   if(isNaN(amount)) return;
-  const cat = categoryEl.value || 'otros';
-  const ymd = meta.selectedDate || todayYMD();
-  const at = new Date(ymd+'T12:00:00'); // noon to avoid TZ edge cases
+  const cat=categoryEl.value||'otros';
+  const ymd=meta.selectedDate||todayYMD();
+  const now=new Date();
+  const [yy,mm,dd]=ymd.split('-').map(Number);
+  // Local-time datetime
+  const at=new Date(yy, (mm||1)-1, dd||1, now.getHours(), now.getMinutes(), now.getSeconds(), 0);
   const rec={ id:crypto.randomUUID(), amount:Math.abs(amount), category:cat, type:addType, createdAt:at.toISOString() };
-  records.unshift(rec); save();
-  amountEl.value=''; // keep date/cat
-  // if adding for selected day, it will show immediately; if not, remains in history
-  render();
+  records.unshift(rec); save(); amountEl.value=''; render();
 };
 
-// Filter by date range (optional prompt)
+// Filter prompts
 filterBtn.onclick=()=>{
   const start=prompt('Filtrar desde (YYYY-MM-DD) o vacío');
   const end=prompt('Hasta (YYYY-MM-DD) o vacío');
@@ -108,15 +110,16 @@ filterBtn.onclick=()=>{
 exportBtn.onclick=()=>{
   const header='id,fecha,importe,tipo,categoria\n';
   const rows=records.map(r=>`${r.id},${r.createdAt},${r.amount},${r.type},${r.category}`).join('\n');
-  const csv=header+rows; const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const blob=new Blob([header+rows],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='gastos.csv'; a.click(); URL.revokeObjectURL(url);
 };
 
-// Render for selected day
+// Render
 function render(){
+  chartOrientation.value=meta.chartOrientation;
   periodEl.textContent=`Día: ${meta.selectedDate}`;
   datePicker.value=meta.selectedDate;
-  // Filter by selected day
+
   const rf=meta.rangeFilter||{}; const start=rf.start?new Date(rf.start):null; const end=rf.end?new Date(rf.end):null;
   const filtered=records.filter(r=>{
     if(localYMDfromISO(r.createdAt)!==meta.selectedDate) return false;
@@ -129,14 +132,12 @@ function render(){
     return true;
   });
 
-  // Totals
   const expenses = filtered.filter(r=>r.type==='expense').reduce((a,r)=>a+Math.abs(r.amount),0);
   const incomes  = filtered.filter(r=>r.type==='income').reduce((a,r)=>a+Math.abs(r.amount),0);
-  totExpenses.textContent = formatMoney(expenses);
-  totIncomes.textContent  = formatMoney(incomes);
-  totNet.textContent      = formatMoney(expenses - incomes);
+  totExpenses.textContent=formatMoney(expenses);
+  totIncomes.textContent=formatMoney(incomes);
+  totNet.textContent=formatMoney(expenses - incomes);
 
-  // List
   listEl.innerHTML='';
   filtered.forEach(r=>{
     const c=DEFAULT_CATS.find(x=>x.key===r.category) || DEFAULT_CATS.at(-1);
@@ -159,80 +160,57 @@ function render(){
     e.preventDefault(); const id=a.getAttribute('data-id'); const r=records.find(x=>x.id===id); if(!r) return;
     const newAmt=parseFloat(prompt('Nuevo monto', r.amount)); if(!isNaN(newAmt)) r.amount=Math.abs(newAmt);
     const newCat=prompt('Nueva categoría (clave):\n'+DEFAULT_CATS.slice(1).map(c=>`${c.key}=${c.name}`).join(', '), r.category); if(newCat) r.category=newCat;
-    const newType=prompt('Tipo (expense/income)', r.type); if(newType==='expense' || newType==='income') r.type=newType;
+    const newType=prompt('Tipo (expense/income)', r.type); if(newType==='expense'||newType==='income') r.type=newType;
     save(); render();
   });
 
-  if(meta.chartOrientation==='horizontal'){ drawBarsHorizontal(filtered);} else { drawBarsVertical(filtered);}
+  if(meta.chartOrientation==='horizontal'){ drawBarsHorizontal(filtered);} else { drawBarsVertical(filtered); }
   updateBudgetAdvice();
 }
 
-// Vertical Bar chart per category (expenses only for clarity)
-function drawBarsVertical(items){
-  const ctx=pieCanvas.getContext('2d');
-  const w=pieCanvas.width=pieCanvas.clientWidth*devicePixelRatio;
-  const h=pieCanvas.height=pieCanvas.clientHeight*devicePixelRatio;
-  ctx.clearRect(0,0,w,h);
-  const sums={};
-  items.filter(r=>r.type==='expense').forEach(r=>{ sums[r.category]=(sums[r.category]||0)+Math.abs(r.amount); });
-  const entries=Object.entries(sums).sort((a,b)=>b[1]-a[1]);
-  if(!entries.length) return;
-
-  const pad=20*devicePixelRatio; const labelH=30*devicePixelRatio;
-  const maxVal=Math.max(...entries.map(([,v])=>v));
-  const innerH = h - pad*2 - labelH;
-  const approxChar = 8*devicePixelRatio; // ~8px per char
-  const barW = Math.max(10*devicePixelRatio, approxChar*6);
-  const gap = 8*devicePixelRatio;
-  let x = pad + ( (w - pad*2) - (entries.length*(barW+gap)-gap) )/2;
-
-  ctx.font=`${11*devicePixelRatio}px -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, Arial`;
-  ctx.textAlign='center';
-  entries.forEach(([cat,val])=>{
-    const c = DEFAULT_CATS.find(x=>x.key===cat);
-    const barH = Math.max(2, innerH * (val / maxVal));
-    const y = pad + (innerH - barH);
-    ctx.fillStyle=(c&&c.color)||'#888';
-    ctx.fillRect(x, y, barW, barH);
-    // value on top
-    ctx.fillStyle='#e9edf5'; ctx.textBaseline='bottom';
-    ctx.fillText(formatMoney(val), x+barW/2, y-4*devicePixelRatio);
-    // label
-    ctx.fillStyle='#8b94a7'; ctx.textBaseline='top';
-    ctx.fillText((c?.name||cat), x+barW/2, pad+innerH+4*devicePixelRatio);
-    x += barW + gap;
-  });
-}
-
-
+// Bars
 function drawBarsHorizontal(items){
   const ctx=pieCanvas.getContext('2d');
   const w=pieCanvas.width=pieCanvas.clientWidth*devicePixelRatio;
   const h=pieCanvas.height=pieCanvas.clientHeight*devicePixelRatio;
   ctx.clearRect(0,0,w,h);
-  const sums={};
-  items.filter(r=>r.type==='expense').forEach(r=>{ sums[r.category]=(sums[r.category]||0)+Math.abs(r.amount); });
-  const entries=Object.entries(sums).sort((a,b)=>b[1]-a[1]);
-  if(!entries.length) return;
-
-  const pad=20*devicePixelRatio; const barH=20*devicePixelRatio; const gap=12*devicePixelRatio;
-  const maxVal=Math.max(...entries.map(([,v])=>v));
-  const labelW=100*devicePixelRatio; const innerW=w-pad*2-labelW;
-  let y=pad;
-  ctx.font=`${12*devicePixelRatio}px -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, Arial`;
-  ctx.textBaseline='middle';
+  const sums={}; items.filter(r=>r.type==='expense').forEach(r=>{ sums[r.category]=(sums[r.category]||0)+Math.abs(r.amount); });
+  const entries=Object.entries(sums).sort((a,b)=>b[1]-a[1]); if(!entries.length) return;
+  const pad=20*devicePixelRatio, barH=20*devicePixelRatio, gap=12*devicePixelRatio, labelW=100*devicePixelRatio;
+  const maxVal=Math.max(...entries.map(([,v])=>v)); let y=pad;
+  ctx.font=`${12*devicePixelRatio}px -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, Arial`; ctx.textBaseline='middle';
   entries.forEach(([cat,val])=>{
-    const c=DEFAULT_CATS.find(x=>x.key===cat); const barW=Math.max(2, innerW*(val/maxVal));
+    const c=DEFAULT_CATS.find(x=>x.key===cat); const barW=Math.max(2,(w-pad*2-labelW)*(val/maxVal));
     ctx.fillStyle='#8b94a7'; ctx.fillText(c?.name||cat, pad, y+barH/2);
     ctx.fillStyle=(c&&c.color)||'#888'; ctx.fillRect(pad+labelW, y, barW, barH);
-    ctx.fillStyle='#e9edf5'; const money=formatMoney(val);
-    ctx.fillText(money, Math.min(w-pad-40*devicePixelRatio, pad+labelW+barW+6*devicePixelRatio), y+barH/2);
+    ctx.fillStyle='#e9edf5'; ctx.fillText(formatMoney(val), Math.min(w-pad-40*devicePixelRatio, pad+labelW+barW+6*devicePixelRatio), y+barH/2);
     y+=barH+gap;
   });
 }
+function drawBarsVertical(items){
+  const ctx=pieCanvas.getContext('2d');
+  const w=pieCanvas.width=pieCanvas.clientWidth*devicePixelRatio;
+  const h=pieCanvas.height=pieCanvas.clientHeight*devicePixelRatio;
+  ctx.clearRect(0,0,w,h);
+  const sums={}; items.filter(r=>r.type==='expense').forEach(r=>{ sums[r.category]=(sums[r.category]||0)+Math.abs(r.amount); });
+  const entries=Object.entries(sums).sort((a,b)=>b[1]-a[1]); if(!entries.length) return;
+  const pad=20*devicePixelRatio; const labelH=30*devicePixelRatio; const innerH=h-pad*2-labelH;
+  const approxChar=8*devicePixelRatio; const barW=Math.max(10*devicePixelRatio, approxChar*6); const gap=8*devicePixelRatio;
+  const maxVal=Math.max(...entries.map(([,v])=>v));
+  let x=pad + ((w - pad*2) - (entries.length*(barW+gap)-gap))/2;
+  ctx.font=`${11*devicePixelRatio}px -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, Arial`; ctx.textAlign='center';
+  entries.forEach(([cat,val])=>{
+    const c=DEFAULT_CATS.find(x=>x.key===cat);
+    const barH=Math.max(2, innerH*(val/maxVal)); const y=pad+(innerH-barH);
+    ctx.fillStyle=(c&&c.color)||'#888'; ctx.fillRect(x,y,barW,barH);
+    ctx.fillStyle='#e9edf5'; ctx.textBaseline='bottom'; ctx.fillText(formatMoney(val), x+barW/2, y-4*devicePixelRatio);
+    ctx.fillStyle='#8b94a7'; ctx.textBaseline='top'; ctx.fillText(c?.name||cat, x+barW/2, pad+innerH+4*devicePixelRatio);
+    x+=barW+gap;
+  });
+}
 
-// Budget advice (rolling 30 days)
-function daysSince(dateISO){ const d1=new Date(dateISO); const d2=new Date(); return Math.floor((d2-d1)/(1000*60*60*24)); }
+// Budget advice
+function daysSince(dateISO){ const d1=new Date(dateISO), d2=new Date(); return Math.floor((d2-d1)/(1000*60*60*24)); }
 function updateBudgetAdvice(){
   if(!records.length){ budgetNote.textContent='Sugerencias de presupuesto disponibles tras 30 días de historial.'; return; }
   const oldest = records.at(-1)?.createdAt || new Date().toISOString();
@@ -254,13 +232,12 @@ remindersToggle.onchange=async()=>{
   if(remindersToggle.checked){
     if(Notification && Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted'){ remindersToggle.checked=false; return; } }
     meta.reminders=true; save(); scheduleLocalReminder();
-  }else{ meta.reminders=false; save(); }
+  } else { meta.reminders=false; save(); }
 };
 function scheduleLocalReminder(){
   if(!('Notification' in window)) return;
   const now=new Date(); const target=new Date(); target.setHours(21,0,0,0); if(now>target) target.setDate(target.getDate()+1);
-  const delay=target-now;
-  setTimeout(()=>{ if(meta.reminders) new Notification('Recordatorio de gastos',{body:'¿Anotaste tus gastos de hoy?'}); scheduleLocalReminder(); }, Math.min(delay, 12*60*60*1000));
+  const delay=target-now; setTimeout(()=>{ if(meta.reminders) new Notification('Recordatorio de gastos',{body:'¿Anotaste tus gastos de hoy?'}); scheduleLocalReminder(); }, Math.min(delay, 12*60*60*1000));
 }
 
 // Footer filters
@@ -268,72 +245,36 @@ showAllBtn.onclick=()=>{ typeFilter='all'; render(); };
 showIncomeBtn.onclick=()=>{ typeFilter='income'; render(); };
 showExpenseBtn.onclick=()=>{ typeFilter='expense'; render(); };
 
-// Date selector
+// Date controls
 datePicker.value=meta.selectedDate;
 datePicker.onchange=()=>{ meta.selectedDate=datePicker.value||todayYMD(); save(); render(); };
 todayBtn.onclick=()=>{ meta.selectedDate=todayYMD(); datePicker.value=meta.selectedDate; save(); render(); };
 
-// Auto-follow today's date when app is opened on a new day
-const lastSeenDay = meta.lastSeenDay || todayYMD();
-const nowDay = todayYMD();
-if(lastSeenDay!==nowDay){ meta.selectedDate=nowDay; }
-meta.lastSeenDay=nowDay; save();
+// Chart orientation
+chartOrientation.value=meta.chartOrientation;
+chartOrientation.onchange=()=>{ meta.chartOrientation=chartOrientation.value; save(); render(); };
 
-// SW
-if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./sw.js'); }); }
+// Normalize noon times
+async function normalizeNoonTimes(){
+  const now=new Date(); let changed=0;
+  records.forEach(r=>{ const d=new Date(r.createdAt); if(d.getHours()===12 && d.getMinutes()===0 && d.getSeconds()===0){ d.setHours(now.getHours(),now.getMinutes(),now.getSeconds(),0); r.createdAt=d.toISOString(); changed++; } });
+  if(changed>0){ save(); render(); alert(`Listo: actualicé ${changed} registro(s).`);} else { alert('No encontré registros con hora 12:00:00.'); }
+}
+normalizeBtn.onclick=normalizeNoonTimes;
+
+// Pull to refresh
+(function(){
+  const ptr=document.getElementById('ptr'); const bubble=ptr.querySelector('.bubble');
+  let startY=0, pulling=false, pulled=0, threshold=70;
+  window.addEventListener('touchstart',(e)=>{ if(document.scrollingElement.scrollTop===0){ startY=e.touches[0].clientY; pulling=true; pulled=0; } }, {passive:true});
+  window.addEventListener('touchmove',(e)=>{ if(!pulling) return; const dy=e.touches[0].clientY-startY; if(dy>0){ pulled=Math.min(dy,120); ptr.style.transform=`translateY(${pulled/3}px)`; ptr.classList.add('show'); bubble.textContent = pulled>threshold ? '✓' : '↻'; } }, {passive:true});
+  window.addEventListener('touchend', async ()=>{ if(!pulling) return; pulling=false; ptr.style.transform=''; if(pulled>threshold){ ptr.classList.add('spin'); try{ if(navigator.serviceWorker?.controller){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.update())); } }catch(e){} setTimeout(()=>location.reload(),300); } else { ptr.classList.remove('show'); } setTimeout(()=>{ ptr.classList.remove('spin'); ptr.classList.remove('show'); },600); });
+})();
+
+// SW register (new filename & cache)
+if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./sw-v29.js'); }); }
 
 // Init
 populateCategories();
 drawChips();
 render();
-
-
-// --- Pull to refresh (v2.5) ---
-(function(){
-  const ptr = document.getElementById('ptr');
-  const bubble = ptr.querySelector('.bubble');
-  let startY = 0, pulling = false, pulled = 0, threshold = 70;
-
-  window.addEventListener('touchstart', (e)=>{
-    if (document.scrollingElement.scrollTop === 0) {
-      startY = e.touches[0].clientY;
-      pulling = true; pulled = 0;
-    }
-  }, {passive:true});
-
-  window.addEventListener('touchmove', (e)=>{
-    if (!pulling) return;
-    const dy = e.touches[0].clientY - startY;
-    if (dy > 0) {
-      pulled = Math.min(dy, 120);
-      ptr.style.transform = `translateY(${pulled/3}px)`;
-      ptr.classList.add('show');
-      if (pulled > threshold) {
-        bubble.textContent = '✓';
-      } else {
-        bubble.textContent = '↻';
-      }
-    }
-  }, {passive:true});
-
-  window.addEventListener('touchend', async ()=>{
-    if (!pulling) return;
-    pulling = false;
-    ptr.style.transform = '';
-    if (pulled > threshold) {
-      ptr.classList.add('spin');
-      // Try to update SW and reload, else soft re-render
-      try {
-        if (navigator.serviceWorker?.controller) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(r=>r.update()));
-        }
-      } catch(e){}
-      setTimeout(()=>{ location.reload(); }, 300);
-    } else {
-      ptr.classList.remove('show');
-    }
-    setTimeout(()=>{ ptr.classList.remove('spin'); ptr.classList.remove('show'); }, 600);
-  });
-})();
-
