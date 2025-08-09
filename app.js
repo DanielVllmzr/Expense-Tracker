@@ -43,7 +43,8 @@ const datePicker=document.getElementById('datePicker');
 const showAllBtn=document.getElementById('showAll');
 const showIncomeBtn=document.getElementById('showIncome');
 const showExpenseBtn=document.getElementById('showExpense');
-const budgetNote=document.getElementById('budgetNote');
+\1
+const normalizeBtn = document.getElementById('normalizeBtn');
 const segExpense=document.getElementById('segExpense');
 const segIncome=document.getElementById('segIncome');
 const totExpenses=document.getElementById('totExpenses');
@@ -89,7 +90,10 @@ addBtn.onclick=()=>{
   if(isNaN(amount)) return;
   const cat = categoryEl.value || 'otros';
   const ymd = meta.selectedDate || todayYMD();
-  const at = new Date(ymd+'T12:00:00'); // noon to avoid TZ edge cases
+const now = new Date();
+const [yy, mm, dd] = ymd.split('-').map(Number);
+const at = new Date(now);
+at.setFullYear(yy, (mm||1)-1, dd||1); // noon to avoid TZ edge cases
   const rec={ id:crypto.randomUUID(), amount:Math.abs(amount), category:cat, type:addType, createdAt:at.toISOString() };
   records.unshift(rec); save();
   amountEl.value=''; // keep date/cat
@@ -337,3 +341,28 @@ render();
   });
 })();
 
+
+
+// --- Normalize existing records with 12:00:00 to current time (keep date) ---
+async function normalizeNoonTimes() {
+  const now = new Date();
+  let changed = 0;
+  records.forEach(r => {
+    const d = new Date(r.createdAt);
+    if (d.getHours() === 12 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+      d.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+      r.createdAt = d.toISOString();
+      changed++;
+    }
+  });
+  if (changed > 0) {
+    save();
+    render();
+    alert(`Listo: actualicé ${changed} registro(s).`);
+  } else {
+    alert('No encontré registros con hora 12:00:00 para corregir.');
+  }
+}
+
+
+if (typeof normalizeBtn !== 'undefined' && normalizeBtn) { normalizeBtn.onclick = normalizeNoonTimes; }
