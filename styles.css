@@ -103,3 +103,41 @@ header{ position: static; top:auto; }
 .ptr.show .bubble{ opacity: 1; }
 .ptr.spin .bubble{ animation: spin 1s linear infinite; border-color: var(--accent); }
 @keyframes spin { from{ transform: rotate(0); } to{ transform: rotate(360deg); } }
+
+
+/* v2.6 - unify topbar date & 'Hoy' sizing */
+.topbar .right .control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0f1116;
+  color: var(--text);
+  font-weight: 600;
+}
+.topbar .right input[type="date"].control {
+  /* Remove default min content width discrepancies */
+  min-width: 120px;
+}
+.topbar .right button.control {
+  min-width: 80px;
+}
+/* Keep spacing consistent */
+.topbar .right { gap: 8px; }
+
+/* v2.6 - entry date full-width aligned with grid */
+.form .full.centered input[type="date"]{
+  width: 100%;
+  max-width: none;
+  padding: 12px;
+  border-radius: 10px;
+  border:1px solid var(--border);
+  background:#0f1116;
+  color: var(--text);
+  text-align: center;
+}
+.form .full.centered { align-items: stretch; }
+.form .full.centered label { align-self: flex-start; }
