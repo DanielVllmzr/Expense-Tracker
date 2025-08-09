@@ -17,8 +17,12 @@
   <h1>Gastos</h1>
   <div class="summary card">
     <div>
-      <div class="total" id="total">$0</div>
       <div class="period" id="period">Día: —</div>
+    </div>
+    <div class="totals">
+      <div class="totalBox"><div class="label">Gastos</div><div class="value" id="totExpenses">$0</div></div>
+      <div class="totalBox"><div class="label">Ingresos</div><div class="value" id="totIncomes">$0</div></div>
+      <div class="totalBox"><div class="label">Neto</div><div class="value" id="totNet">$0</div></div>
     </div>
     <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
       <input id="datePicker" type="date" style="background:#0f1116;color:#e9edf5;border:1px solid var(--border);border-radius:8px;padding:8px;">
@@ -27,6 +31,10 @@
   </div>
 
   <div class="form">
+    <div class="segment" style="grid-column:1/-1;">
+      <button id="segExpense" class="active">Gasto</button>
+      <button id="segIncome">Ingreso</button>
+    </div>
     <div>
       <label for="amount" class="small">Monto (USD)</label>
       <input id="amount" type="number" inputmode="decimal" step="0.01" placeholder="0.00" />
@@ -34,6 +42,10 @@
     <div class="select-wrap">
       <label for="category" class="small">Categoría</label>
       <select id="category"></select>
+    </div>
+    <div>
+      <label for="entryDate" class="small">Fecha del registro</label>
+      <input id="entryDate" type="date" />
     </div>
     <div class="actions" style="grid-column: 1 / -1;">
       <button class="primary" id="addBtn">Agregar</button>
@@ -47,7 +59,7 @@
 
 <div class="container">
   <div class="section">
-    <h2>Gastos del día</h2>
+    <h2>Movimientos del día</h2>
     <div class="list" id="list"></div>
   </div>
 
@@ -61,6 +73,13 @@
     <div class="settings-row">
       <span class="small">Recordatorio diario para anotar gastos</span>
       <label><input type="checkbox" id="remindersToggle"> Habilitar</label>
+    </div>
+    <div class="settings-row">
+      <span class="small">Gráfica de barras</span>
+      <select id="chartOrientation">
+        <option value="vertical">Vertical</option>
+        <option value="horizontal">Horizontal</option>
+      </select>
     </div>
     <div class="small" id="budgetNote">Sugerencias de presupuesto disponibles tras 30 días de historial.</div>
     <div class="small">Usá el selector de fecha para ver días anteriores.</div>
