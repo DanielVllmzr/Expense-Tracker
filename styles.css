@@ -104,40 +104,42 @@ header{ position: static; top:auto; }
 .ptr.spin .bubble{ animation: spin 1s linear infinite; border-color: var(--accent); }
 @keyframes spin { from{ transform: rotate(0); } to{ transform: rotate(360deg); } }
 
-
-/* v2.6 - unify topbar date & 'Hoy' sizing */
-.topbar .right .control {
+/* v2.6 real fix: make date and 'Hoy' identical */
+.topbar .right .btn-inline,
+.topbar .right .date-inline,
+.topbar .right input[type="date"],
+.topbar .right button#todayBtn {
+  height: 40px !important;
+  padding: 8px 14px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  background: #0f1116 !important;
+  color: var(--text) !important;
+  font-weight: 600 !important;
+  line-height: 24px !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  padding: 6px 12px;
-  border-radius: 8px;
+}
+
+/* Reduce default iOS date input quirks */
+.topbar .right input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 140px;
+}
+
+/* Align 'Fecha del registro' with action buttons (full width) */
+.form .full.centered { grid-column: 1 / -1; }
+.form .full.centered input[type="date"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: #0f1116;
   color: var(--text);
-  font-weight: 600;
-}
-.topbar .right input[type="date"].control {
-  /* Remove default min content width discrepancies */
-  min-width: 120px;
-}
-.topbar .right button.control {
-  min-width: 80px;
-}
-/* Keep spacing consistent */
-.topbar .right { gap: 8px; }
-
-/* v2.6 - entry date full-width aligned with grid */
-.form .full.centered input[type="date"]{
-  width: 100%;
-  max-width: none;
-  padding: 12px;
-  border-radius: 10px;
-  border:1px solid var(--border);
-  background:#0f1116;
-  color: var(--text);
   text-align: center;
 }
-.form .full.centered { align-items: stretch; }
-.form .full.centered label { align-self: flex-start; }
+
+/* Remove sticky header to avoid freeze */
+header { position: static; top: auto; }
