@@ -13,7 +13,7 @@
 </head>
 <body>
 
-<!-- ====== LOGIN (visible si no hay sesión) ====== -->
+<!-- LOGIN -->
 <section id="login" style="display:block; padding:16px; max-width:420px; margin:40px auto;">
   <h2 style="margin-bottom:12px;">Iniciar sesión</h2>
   <form id="login-form" style="display:flex; flex-direction:column; gap:10px;">
@@ -24,7 +24,7 @@
   <button id="google-btn" class="ghost" style="margin-top:10px;">Entrar con Google</button>
 </section>
 
-<!-- ====== APP (oculta hasta que te logueás) ====== -->
+<!-- APP -->
 <section id="app" style="display:none;">
 
   <div class="ptr" id="ptr"><div class="bubble">↻</div></div>
@@ -62,9 +62,9 @@
         <select id="category"></select>
       </div>
       <div class="actions" style="grid-column:1/-1;">
-        <button class="primary" id="addBtn">Agregar</button>
-        <button class="ghost" id="filterBtn">Filtrar</button>
-        <button class="ghost" id="exportBtn">Exportar CSV</button>
+        <button class="primary" id="addBtn" type="button">Agregar</button>
+        <button class="ghost" id="filterBtn" type="button">Filtrar</button>
+        <button class="ghost" id="exportBtn" type="button">Exportar CSV</button>
       </div>
     </div>
 
@@ -97,37 +97,30 @@
       </div>
       <div class="settings-row">
         <span class="small">Corregir horas 12:00 PM en registros existentes</span>
-        <button class="ghost" id="normalizeBtn">Normalizar</button>
+        <button class="ghost" id="normalizeBtn" type="button">Normalizar</button>
       </div>
       <div class="small" id="budgetNote">Sugerencias de presupuesto disponibles tras 30 días de historial.</div>
 
-      <!-- Botón de Cerrar sesión centrado -->
       <div style="display:flex; justify-content:center; margin-top:16px;">
-        <button id="logoutBtn" class="ghost" style="color:#ff5757; font-weight:600;">Cerrar sesión</button>
+        <button id="logoutBtn" class="ghost" style="color:#ff5757; font-weight:600;" type="button">Cerrar sesión</button>
       </div>
     </div>
   </div>
 
   <footer class="nav">
-    <button id="showAll">Todos</button>
-    <button id="showIncome">Ingresos</button>
-    <button id="showExpense">Gastos</button>
+    <button id="showAll" type="button">Todos</button>
+    <button id="showIncome" type="button">Ingresos</button>
+    <button id="showExpense" type="button">Gastos</button>
   </footer>
 
 </section>
 
-<!-- Cargar capa de datos de Firestore antes de la app -->
-<script type="module" src="firestore-data.js"></script>
-<!-- Tu JS existente -->
-<script src="app.js?v=29"></script>
-
-<!-- ====== Firebase (Auth + Firestore) ====== -->
+<!-- 1) Inicializa Firebase -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
   import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
-  // ⚠️ Reemplazar por tu config real si hace falta
   const firebaseConfig = {
     apiKey: "AIzaSyChk3C0X_gUpPQy1t6Xk58IA7rZl2cjpr4",
     authDomain: "expense-tracker-b63a3.firebaseapp.com",
@@ -145,7 +138,6 @@
   const login   = document.getElementById('login');
   const appView = document.getElementById('app');
 
-  // Login email/clave
   document.getElementById('login-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = e.target.email.value.trim();
@@ -153,25 +145,23 @@
     await signInWithEmailAndPassword(auth, email, pass);
   });
 
-  // Login con Google
   document.getElementById('google-btn')?.addEventListener('click', async () => {
     await signInWithPopup(auth, new GoogleAuthProvider());
   });
 
-  // Logout
   document.getElementById('logoutBtn')?.addEventListener('click', () => signOut(auth));
 
-  // Gate de sesión
   onAuthStateChanged(auth, (user) => {
-    if (user) {
-      login.style.display = 'none';
-      appView.style.display = 'block';
-    } else {
-      appView.style.display = 'none';
-      login.style.display = 'block';
-    }
+    if (user) { login.style.display='none'; appView.style.display='block'; }
+    else { appView.style.display='none'; login.style.display='block'; }
   });
 </script>
+
+<!-- 2) dataStore (usa la app ya creada) -->
+<script type="module" src="firestore-data.js"></script>
+
+<!-- 3) Tu app (usa window.dataStore) - cache bust v=30 -->
+<script src="app.js?v=31"></script>
 
 </body>
 </html>

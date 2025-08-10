@@ -60,3 +60,7 @@ window.dataStore = {
     await deleteDoc(userDoc(u, id));
   }
 };
+
+
+// Anuncia que dataStore está disponible (para evitar carreras de carga)
+window.dispatchEvent(new Event('dataStoreReady'));
