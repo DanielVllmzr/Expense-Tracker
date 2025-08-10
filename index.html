@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gastos Rápidos</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0c0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="login" style="display:block; padding:16px; max-width:420px; margin:40px auto;">
+  <h2 style="margin-bottom:12px;">Iniciar sesión</h2>
+  <form id="login-form" style="display:flex; flex-direction:column; gap:10px;">
+    <input name="email" type="email" placeholder="Email" required class="control" />
+    <input name="password" type="password" placeholder="Contraseña" required class="control" />
+    <button class="primary">Entrar</button>
+  </form>
+  <button id="google-btn" class="ghost" style="margin-top:10px;">Entrar con Google</button>
+</section>
+
+<!-- APP -->
+<section id="app" style="display:none;">
+
+  <div class="ptr" id="ptr"><div class="bubble">↻</div></div>
+
+  <header>
+    <div class="topbar">
+      <h1>Gastos</h1>
+      <div class="right">
+        <input id="datePicker" class="control" type="date">
+        <button class="control" id="todayBtn">Hoy</button>
+      </div>
+    </div>
+    <div class="summary">
+      <div class="card">
+        <div class="period" id="period">Día: —</div>
+        <div class="totals">
+          <div class="totalBox"><div class="label">Gastos</div><div class="value" id="totExpenses">$0</div></div>
+          <div class="totalBox"><div class="label">Ingresos</div><div class="value" id="totIncomes">$0</div></div>
+          <div class="totalBox"><div class="label">Neto</div><div class="value" id="totNet">$0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form">
+      <div class="segment" style="grid-column:1/-1;">
+        <button id="segExpense" class="active">Gasto</button>
+        <button id="segIncome">Ingreso</button>
+      </div>
+      <div>
+        <label class="small">Monto (USD)</label>
+        <input id="amount" type="number" inputmode="decimal" step="0.01" placeholder="0.00" />
+      </div>
+      <div class="select-wrap">
+        <label class="small">Categoría</label>
+        <select id="category"></select>
+      </div>
+      <div class="actions" style="grid-column:1/-1;">
+        <button class="primary" id="addBtn" type="button">Agregar</button>
+        <button class="ghost" id="filterBtn" type="button">Filtrar</button>
+        <button class="ghost" id="exportBtn" type="button">Exportar CSV</button>
+      </div>
+    </div>
+
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <div class="container">
+    <div class="section">
+      <h2>Movimientos del día</h2>
+      <div class="list" id="list"></div>
+    </div>
+
+    <div class="section">
+      <h2>Distribución por categoría</h2>
+      <canvas id="pie"></canvas>
+    </div>
+
+    <div class="section">
+      <h2>Ajustes</h2>
+      <div class="settings-row">
+        <span class="small">Recordatorio diario para anotar gastos</span>
+        <label><input type="checkbox" id="remindersToggle"> Habilitar</label>
+      </div>
+      <div class="settings-row">
+        <span class="small">Gráfica de barras</span>
+        <select id="chartOrientation">
+          <option value="vertical">Vertical</option>
+          <option value="horizontal">Horizontal</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <span class="small">Corregir horas 12:00 PM en registros existentes</span>
+        <button class="ghost" id="normalizeBtn" type="button">Normalizar</button>
+      </div>
+      <div class="small" id="budgetNote">Sugerencias de presupuesto disponibles tras 30 días de historial.</div>
+
+      <div style="display:flex; justify-content:center; margin-top:16px;">
+        <button id="logoutBtn" class="ghost" style="color:#ff5757; font-weight:600;" type="button">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="nav">
+    <button id="showAll" type="button">Todos</button>
+    <button id="showIncome" type="button">Ingresos</button>
+    <button id="showExpense" type="button">Gastos</button>
+  </footer>
+
+</section>
+
+<!-- 1) Inicializa Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+  import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyChk3C0X_gUpPQy1t6Xk58IA7rZl2cjpr4",
+    authDomain: "expense-tracker-b63a3.firebaseapp.com",
+    projectId: "expense-tracker-b63a3",
+    storageBucket: "expense-tracker-b63a3.firebasestorage.app",
+    messagingSenderId: "462473889347",
+    appId: "1:462473889347:web:89f444de30b6999cc836f6",
+    measurementId: "G-DH57N0NDMW"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const login   = document.getElementById('login');
+  const appView = document.getElementById('app');
+
+  document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = e.target.email.value.trim();
+    const pass  = e.target.password.value.trim();
+    await signInWithEmailAndPassword(auth, email, pass);
+  });
+
+  document.getElementById('google-btn')?.addEventListener('click', async () => {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  });
+
+  document.getElementById('logoutBtn')?.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) { login.style.display='none'; appView.style.display='block'; }
+    else { appView.style.display='none'; login.style.display='block'; }
+  });
+</script>
+
+<!-- 2) dataStore (usa la app ya creada) -->
+<script type="module" src="firestore-data.js"></script>
+
+<!-- 3) Tu app (usa window.dataStore) - cache bust v=30 -->
+<script src="app.js?v=30"></script>
+
+</body>
+</html>
