@@ -25,11 +25,13 @@
   <form id="login-form" class="login-form">
     <input name="email" type="email" placeholder="Email" required class="control" />
     <input name="password" type="password" placeholder="Contraseña" required class="control" />
+    <input id="password2" type="password" placeholder="Confirmar contraseña" class="control" style="display:none;" />
     <button class="primary">Entrar</button>
   </form>
 
   <div class="login-row">
     <button id="google-btn" class="ghost">Entrar con Google</button>
+    <button id="registerBtn" class="ghost" type="button"> Crear cuenta</button> 
     <label class="switch-card" title="Mantener sesión iniciada">
       <input type="checkbox" id="rememberToggle" />
       <span>Recordarme</span>
@@ -158,7 +160,11 @@
 <!-- 1) Inicializa Firebase -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+  import {
+    getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+    GoogleAuthProvider, signInWithPopup, signOut,
+    createUserWithEmailAndPassword
+  } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
   import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -175,38 +181,79 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
+  // Vistas
   const login   = document.getElementById('login');
   const appView = document.getElementById('app');
 
-  // Persistencia (Recordarme)
-  const rememberToggle = document.getElementById('rememberToggle');
-  rememberToggle.checked = localStorage.getItem('rememberLogin') === '1';
-  async function applyPersistence(){
-    try {
-      await setPersistence(auth, rememberToggle.checked ? browserLocalPersistence : browserSessionPersistence);
-      localStorage.setItem('rememberLogin', rememberToggle.checked ? '1' : '0');
-    } catch(e){ console.warn('Persistencia no aplicada:', e); }
-  }
-  rememberToggle.addEventListener('change', applyPersistence);
-  applyPersistence();
+  // Elementos del formulario
+  const form       = document.getElementById('login-form');
+  const emailInp   = form?.querySelector('[name="email"]');
+  const passInp    = form?.querySelector('[name="password"]');
+  const pass2Inp   = document.getElementById('password2');     // 👈 confirmación (oculta al inicio)
+  const googleBtn  = document.getElementById('google-btn');
+  const registerBtn= document.getElementById('registerBtn');   // 👈 botón Crear cuenta
+  const logoutBtn  = document.getElementById('logoutBtn');
 
-  // Login / Google
-  document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+  // Helpers
+  function showConfirm(show = true){
+    if(!pass2Inp) return;
+    pass2Inp.style.display = show ? 'block' : 'none';
+    if(show) pass2Inp.value = '';
+  }
+
+  // Login con email / contraseña
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    await applyPersistence();
-    const email = e.target.email.value.trim();
-    const pass  = e.target.password.value.trim();
+    const email = emailInp?.value.trim();
+    const pass  = passInp?.value.trim();
+    if(!email || !pass){ alert('Ingresá email y contraseña.'); return; }
     await signInWithEmailAndPassword(auth, email, pass);
   });
-  document.getElementById('google-btn')?.addEventListener('click', async () => {
-    await applyPersistence();
+
+  // Login con Google
+  googleBtn?.addEventListener('click', async () => {
     await signInWithPopup(auth, new GoogleAuthProvider());
   });
-  document.getElementById('logoutBtn')?.addEventListener('click', () => signOut(auth));
 
+  // Crear cuenta con confirmación
+  registerBtn?.addEventListener('click', async () => {
+    try{
+      const email = emailInp?.value.trim();
+      const pass  = passInp?.value.trim();
+
+      // Primer click → mostrar confirmación
+      if(pass2Inp && pass2Inp.style.display === 'none'){
+        showConfirm(true);
+        pass2Inp.focus();
+        return;
+      }
+
+      const pass2 = pass2Inp?.value.trim() || '';
+      if(!email || !pass){ alert('Ingresá email y contraseña.'); return; }
+      if(pass.length < 6){ alert('La contraseña debe tener al menos 6 caracteres.'); return; }
+      if(pass !== pass2){ alert('Las contraseñas no coinciden.'); return; }
+
+      await createUserWithEmailAndPassword(auth, email, pass);
+      alert('¡Bienvenido! Tu cuenta fue creada correctamente.');
+      showConfirm(false); // volvemos a ocultar el confirm
+    }catch(err){
+      const code = err?.code || '';
+      let msg = 'No se pudo crear la cuenta.';
+      if (code.includes('email-already-in-use')) msg = 'Ese email ya está registrado.';
+      if (code.includes('invalid-email'))        msg = 'El email no es válido.';
+      if (code.includes('weak-password'))        msg = 'La contraseña es muy débil (mínimo 6).';
+      alert(msg);
+      console.error('[register]', err);
+    }
+  });
+
+  // Logout
+  logoutBtn?.addEventListener('click', () => signOut(auth));
+
+  // Mostrar/ocultar vistas según sesión
   onAuthStateChanged(auth, (user) => {
     if (user) { login.style.display='none'; appView.style.display='block'; }
-    else { appView.style.display='none'; login.style.display='block'; }
+    else { appView.style.display='none'; login.style.display='block'; showConfirm(false); }
   });
 </script>
 
