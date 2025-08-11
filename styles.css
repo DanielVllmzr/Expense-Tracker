@@ -1,0 +1,205 @@
+:root{
+  --bg:#0b0c0f; --card:#14161b; --muted:#8b94a7; --text:#e9edf5; --accent:#28b487;
+  --chip-bg:#1b2029; --danger:#ff6b6b; --border:#242a36; --shadow:0 8px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,Arial,sans-serif;}
+body{max-width:700px;margin:0 auto;overflow-x:hidden;}
+header{background:var(--bg);padding:14px 16px 8px;border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px);}
+.topbar{display:flex;align-items:center;gap:12px;}
+.topbar h1{margin:0;font-size:22px;}
+.topbar .right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.control{height:40px;padding:8px 14px;border-radius:12px;border:1px solid var(--border);background:#0f1116;color:var(--text);display:inline-flex;align-items:center;justify-content:center;font-weight:600;}
+.topbar .right input[type="date"]{appearance:none;-webkit-appearance:none;min-width:140px;}
+.summary{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.card{background:var(--card);padding:12px 14px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);width:100%;}
+.period{color:var(--muted);font-size:12px;}
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.totalBox{background:#0f1116;border:1px solid var(--border);border-radius:10px;padding:8px 10px;text-align:center;}
+.totalBox .label{font-size:11px;color:var(--muted);}
+.totalBox .value{font-size:16px;font-weight:700;}
+
+.container{padding:14px 16px 90px;}
+.segment{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.segment button{flex:1;padding:10px;background:#0f1116;border:0;color:var(--text);font-weight:600;}
+.segment button.active{background:var(--accent);color:#041d14;}
+
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;align-items:end;}
+.form input[type="number"], .form input[type="text"]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:#0f1116;color:var(--text);}
+.select-wrap{position:relative;}
+select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:#0f1116;color:var(--text);appearance:none;}
+.select-wrap:after{content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+button{padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#0f1116;color:var(--text);font-weight:600;}
+button.primary{background:var(--accent);color:#041d14;border-color:#1e8f6b;}
+button.ghost{background:transparent;}
+button.danger{background:var(--danger);color:#310a0a;border-color:#b84e4e;}
+button:active{transform:translateY(1px);}
+
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;margin-bottom:8px;}
+.chip{background:var(--chip-bg);padding:10px 12px;border-radius:999px;border:1px solid var(--border);font-size:12px;display:flex;align-items:center;gap:6px;justify-content:center;font-weight:600;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+
+.section{margin-top:18px;}
+.section h2{font-size:14px;margin:0 0 8px;color:var(--muted);}
+.list{display:flex;flex-direction:column;gap:8px;}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--border);}
+.item .left{display:flex;align-items:center;gap:10px;}
+.item .meta{font-size:11px;color:var(--muted);}
+.item .amt{font-weight:700;}
+.item .edit{font-size:12px;}
+.item .edit a{text-decoration:none;font-weight:600;}
+.item .edit a.del{color:#ff8a8a;}
+
+footer.nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:8px;padding:10px;}
+footer.nav button{flex:1;}
+
+canvas{width:100%;height:220px;background:#0f1116;border-radius:12px;border:1px solid var(--border);}
+.small{font-size:12px;color:var(--muted);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--card);margin-bottom:8px;}
+
+/* Pull-to-refresh */
+.ptr{position:fixed;top:0;left:0;right:0;height:0;display:flex;justify-content:center;pointer-events:none;z-index:50;}
+.ptr .bubble{margin-top:8px;width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;background:#0f1116;color:var(--muted);font-size:12px;}
+.ptr.show .bubble{opacity:1;}
+.ptr.spin .bubble{animation:spin 1s linear infinite;border-color:var(--accent);}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* Login */
+.login-wrap{padding:16px; max-width:420px; margin:40px auto;}
+.login-form{display:flex; flex-direction:column; gap:10px;}
+.login-row{display:flex;gap:8px;margin-top:10px;}
+.login-row > *{flex:1;}
+.switch-card{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:#0f1116;border-radius:12px;height:40px;font-weight:600;}
+.switch-card input{appearance:auto; width:42px; height:22px;}
+
+/* Categorías panel */
+.cats-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin:8px 0;box-shadow:var(--shadow);width:100%;max-width:100%;overflow:hidden;}
+.cats-head, .cats-new{display:grid;grid-template-columns:60px 1fr 1fr 140px;gap:8px;align-items:center;}
+.cats-body{display:flex;flex-direction:column;gap:8px;max-height:380px;overflow:auto;padding-right:4px;}
+.cat-row{display:grid;grid-template-columns:60px 1fr 1fr 140px;gap:8px;align-items:center;}
+.cat-row input[type="text"]{padding:10px;border-radius:10px;border:1px solid var(--border);background:#0f1116;color:var(--text);width:100%;}
+.cat-row input[type="color"], .cats-new input[type="color"]{width:48px;height:34px;border:1px solid var(--border);border-radius:8px;background:#0f1116;}
+.cats-new input[type="text"]{padding:10px;border-radius:10px;border:1px solid var(--border);background:#0f1116;color:var(--text);width:100%;}
+
+@media (max-width:540px){
+  .cats-head, .cats-new, .cat-row{grid-template-columns:48px 1fr; grid-auto-rows:auto;}
+  .cats-head > :nth-child(3), .cats-head > :nth-child(4){display:none;}
+  .cat-row .nameInp, .cat-row .actions{grid-column:1/-1;}
+  .cats-new > :nth-child(3), .cats-new > :nth-child(4){grid-column:1/-1;}
+}
+
+/* v41.1 â€” Solo look de toggle para #rememberToggle */
+/* No cambia la lÃ³gica; estiliza el checkbox como un switch iOS */
+.switch-card #rememberToggle{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: #2a2e37;
+  border: 1px solid var(--border);
+  position: relative;
+  outline: none;
+  transition: background .2s ease, border-color .2s ease;
+  vertical-align: middle;
+}
+.switch-card #rememberToggle::after{
+  content:'';
+  position:absolute;
+  top:2px;
+  left:2px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.35);
+  transition: transform .2s ease;
+}
+.switch-card #rememberToggle:checked{
+  background: var(--accent);
+  border-color:#1e8f6b;
+}
+.switch-card #rememberToggle:checked::after{
+  transform: translateX(18px);
+}
+/* Marca de login (logo + título) */
+.login-hero{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+.login-hero img{
+  width: clamp(96px, 28vw, 180px);
+  height:auto;
+  display:block;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.25));
+}
+.login-hero h1{
+  margin:0;
+  font-size:clamp(20px, 3.8vw, 26px);
+  line-height:1.2;
+  text-align:center;
+}
+/* === Ajuste de tamaño del toggle para igualar a los botones === */
+.login-row{ display:flex; gap:8px; align-items:center; }
+
+/* El “card” que envuelve el toggle toma la misma altura y look que los botones .ghost */
+.switch-card{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  height:40px;                 /* misma altura que los botones */
+  padding:0 14px;              /* mismo padding horizontal */
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#0f1116;
+  font-weight:600;
+  line-height:1;
+}
+
+/* El switch interno mantiene su tamaño cómodo */
+.switch-card input{
+  appearance:none;
+  width:42px; height:22px;
+  position:relative;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#0b0c0f;
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.15);
+  outline:none;
+  transition:background .2s, border-color .2s;
+}
+.switch-card input::before{
+  content:'';
+  position:absolute; top:2px; left:2px;
+  width:18px; height:18px; border-radius:50%;
+  background:#e9edf5;
+  box-shadow:0 1px 3px rgba(0,0,0,.35);
+  transition:transform .2s;
+}
+.switch-card input:checked{ background:var(--accent); border-color:#1e8f6b; }
+.switch-card input:checked::before{ transform:translateX(20px); }
+
+/* Texto “Recordarme” */
+.switch-card span{ white-space:nowrap; }
+.login-row button,
+.login-row label.switch-card {
+    height: 40px; /* misma altura para todos */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+
+.login-row label.switch-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: transparent;
+    gap: 8px;
+}
