@@ -15,12 +15,17 @@
 
 <!-- LOGIN -->
 <section id="login" class="login-wrap">
-  <h2>Iniciar sesión</h2>
+  <div class="login-hero">
+    <img src="icons/logo.png" alt="Expense Tracker" />
+    <h1>Iniciar sesión</h1>
+  </div>
+
   <form id="login-form" class="login-form">
     <input name="email" type="email" placeholder="Email" required class="control" />
     <input name="password" type="password" placeholder="Contraseña" required class="control" />
     <button class="primary">Entrar</button>
   </form>
+
   <div class="login-row">
     <button id="google-btn" class="ghost">Entrar con Google</button>
     <label class="switch-card" title="Mantener sesión iniciada">
@@ -29,6 +34,7 @@
     </label>
   </div>
 </section>
+
 
 <!-- APP -->
 <section id="app" style="display:none;">

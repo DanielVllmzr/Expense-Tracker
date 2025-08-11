@@ -124,3 +124,24 @@ canvas{width:100%;height:220px;background:#0f1116;border-radius:12px;border:1px 
 .switch-card #rememberToggle:checked::after{
   transform: translateX(18px);
 }
+/* Marca de login (logo + título) */
+.login-hero{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+.login-hero img{
+  width: clamp(96px, 28vw, 180px);
+  height:auto;
+  display:block;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.25));
+}
+.login-hero h1{
+  margin:0;
+  font-size:clamp(20px, 3.8vw, 26px);
+  line-height:1.2;
+  text-align:center;
+}
