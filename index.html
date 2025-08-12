@@ -165,10 +165,12 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
     import {
-      getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence,
-      signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
-      createUserWithEmailAndPassword   // ← agregado
-    } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+  getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence,
+  signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
+  createUserWithEmailAndPassword, // para registrar usuarios
+  signInWithRedirect, getRedirectResult // para fallback en móviles
+} from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+
     import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -188,6 +190,12 @@
     const login   = document.getElementById('login');
     const appView = document.getElementById('app');
     const boot    = document.getElementById('boot');
+
+    // Captura resultado de redirect si lo hubo
+getRedirectResult(auth).catch((e) => {
+  // Errores de redirect
+  console.warn('Google redirect error:', e?.code || e);
+});
 
     function show(view){
       if (boot)    boot.style.display = 'none';
@@ -212,6 +220,40 @@
     }
     rememberToggle.addEventListener('change', applyPersistence);
     applyPersistence();
+    const googleProvider = new GoogleAuthProvider();
+
+function isStandalonePWA() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         (window.navigator.standalone === true);
+}
+
+async function signInGoogleSmart() {
+  await applyPersistence();
+  try {
+    if (isStandalonePWA()) {
+      // PWA / iOS: usa redirect
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
+    // Navegador normal: intenta popup
+    await signInWithPopup(auth, googleProvider);
+  } catch (e) {
+    // Si el popup no está permitido, cae a redirect
+    const fallbackCodes = [
+      'auth/operation-not-supported-in-this-environment',
+      'auth/popup-blocked',
+    ];
+    if (fallbackCodes.includes(e.code)) {
+      await signInWithRedirect(auth, googleProvider);
+    } else {
+      alert('No se pudo iniciar con Google: ' + (e.message || e.code));
+      console.error(e);
+    }
+  }
+}
+
+document.getElementById('google-btn')?.addEventListener('click', signInGoogleSmart);
+
 
     // 👉 Modo registro
     let registering = false;
