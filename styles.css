@@ -203,3 +203,137 @@ canvas{width:100%;height:220px;background:#0f1116;border-radius:12px;border:1px 
     background-color: transparent;
     gap: 8px;
 }
+/* === Password eye (minimal, tono de la app) === */
+.pwd-wrap{ position:relative; }
+.pwd-wrap .control{ padding-right:44px; } /* espacio para el icono */
+
+.pwd-toggle{
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  width:28px; height:28px; border:1px solid var(--border);
+  background:#0f1116; color:var(--muted);
+  display:flex; align-items:center; justify-content:center;
+  border-radius:8px; cursor:pointer; outline:0;
+}
+.pwd-toggle:hover{ color:var(--text); border-color:#2a2f3b; }
+.pwd-toggle:active{ transform:translateY(calc(-50% + 1px)); }
+
+.pwd-toggle .eye-open{ display:none; }
+.pwd-toggle.is-on .eye-open{ display:block; }
+.pwd-toggle.is-on .eye-closed{ display:none; }
+/* ===== Password eye (login) ===== */
+.input-wrap{ position:relative; }
+.input-wrap .control{ padding-right:44px; } /* deja lugar para el ojo */
+
+.pwd-toggle{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  width:34px; height:30px; border-radius:8px;
+  border:1px solid var(--border); background:#0f1116; color:var(--muted);
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.pwd-toggle:hover{ color:var(--text); }
+.pwd-toggle.is-on{
+  color:var(--accent); border-color:#1e8f6b; background:#0d1a16;
+}
+.pwd-toggle svg{ pointer-events:none; }
+/* Wrapper para input con ícono */
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Input dentro del wrapper ocupa todo el ancho */
+.input-wrap .control {
+  width: 100%;
+  padding-right: 40px; /* deja espacio para el ícono a la derecha */
+  box-sizing: border-box;
+}
+
+/* Botón del ojo */
+.pwd-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  height: 100%;
+}
+
+.pwd-toggle:hover {
+  color: #fff;
+}
+
+/* Cuando está activo (mostrando contraseña) */
+.pwd-toggle.is-on {
+  color: #4cc9f0;
+}
+/* === Password eye: sin fondo/bor borde, solo el ícono === */
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrap .control {
+  width: 100%;
+  padding-right: 44px;              /* espacio para el ojo */
+  box-sizing: border-box;
+}
+
+.pwd-toggle{
+  /* resetear estilos globales de button */
+  all: unset;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  /* solo el icono cambia de color */
+  color: #8b94a7;                   /* gris suave por defecto */
+}
+
+.pwd-toggle:hover { color: #cbd5e1; }  /* un poco más claro al hover */
+.pwd-toggle:focus-visible { outline: 2px solid var(--border); outline-offset: 2px; }
+.pwd-toggle.is-on { color: var(--accent); } /* activo = color acento */
+
+/* el SVG usa el color actual */
+.pwd-toggle svg { display:block; pointer-events: none; }
+/* Forzar que el botón del ojo nunca tenga fondo ni borde */
+.pwd-toggle,
+.pwd-toggle:hover,
+.pwd-toggle:active,
+.pwd-toggle:focus,
+.pwd-toggle.is-on {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Ya lo tenías, lo repito aquí por si quedó antes del reset global */
+.pwd-toggle{
+  all: unset;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #8b94a7;
+}
+.pwd-toggle:hover { color: #cbd5e1; }
+.pwd-toggle.is-on { color: var(--accent); }
+.pwd-toggle:focus-visible { outline: 2px solid var(--border); outline-offset: 2px; }
+.pwd-toggle svg { display:block; pointer-events:none; }

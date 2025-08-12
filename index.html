@@ -28,9 +28,30 @@
     </div>
 
     <form id="login-form" class="login-form">
-      <input name="email" type="email" placeholder="Email" required class="control" />
-      <input name="password" type="password" placeholder="Contraseña" required class="control" />
-      <input id="password2" type="password" placeholder="Confirmar contraseña" class="control" style="display:none;" />
+      <input id="email" name="email" type="email" placeholder="Email" required class="control" />
+
+      <!-- Contraseña + ojo -->
+      <div class="input-wrap">
+        <input id="password" name="password" type="password" placeholder="Contraseña" required class="control" />
+        <button type="button" class="pwd-toggle" data-target="password" aria-label="Mostrar contraseña">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M1.5 12s3.5-6.5 10.5-6.5S22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" />
+            <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Confirmar contraseña (se muestra solo para “Crear cuenta”) -->
+      <div id="pw2wrap" class="input-wrap" style="display:none;">
+        <input id="password2" type="password" placeholder="Confirmar contraseña" class="control" />
+        <button type="button" class="pwd-toggle" data-target="password2" aria-label="Mostrar contraseña">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M1.5 12s3.5-6.5 10.5-6.5S22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" />
+            <circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+          </svg>
+        </button>
+      </div>
+
       <button class="primary" id="submitBtn">Entrar</button>
     </form>
 
@@ -165,12 +186,10 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
     import {
-  getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence,
-  signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
-  createUserWithEmailAndPassword, // para registrar usuarios
-  signInWithRedirect, getRedirectResult // para fallback en móviles
-} from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
-
+      getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, browserSessionPersistence,
+      signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
+      createUserWithEmailAndPassword, signInWithRedirect, getRedirectResult
+    } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
     import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -192,10 +211,9 @@
     const boot    = document.getElementById('boot');
 
     // Captura resultado de redirect si lo hubo
-getRedirectResult(auth).catch((e) => {
-  // Errores de redirect
-  console.warn('Google redirect error:', e?.code || e);
-});
+    getRedirectResult(auth).catch((e) => {
+      console.warn('Google redirect error:', e?.code || e);
+    });
 
     function show(view){
       if (boot)    boot.style.display = 'none';
@@ -220,40 +238,61 @@ getRedirectResult(auth).catch((e) => {
     }
     rememberToggle.addEventListener('change', applyPersistence);
     applyPersistence();
+
+    // === Ojo mostrar/ocultar contraseña (inicializa ya) ===
+    function wirePasswordToggles(){
+      document.querySelectorAll('.pwd-toggle').forEach((btn)=>{
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if(!input) return;
+        const update = (show) => {
+          input.type = show ? 'text' : 'password';
+          btn.classList.toggle('is-on', show);
+          btn.setAttribute('aria-pressed', String(show));
+          btn.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        };
+        btn.addEventListener('click', ()=>{
+          const show = input.type === 'password';
+          update(show);
+        });
+      });
+    }
+    wirePasswordToggles();
+
+    // Helper para mostrar/ocultar el wrapper del confirmar
+    window.showConfirm = function(showIt){
+      const w = document.getElementById('pw2wrap');
+      if (w) w.style.display = showIt ? '' : 'none';
+    };
+
+    // Google smart (popup o redirect según entorno)
     const googleProvider = new GoogleAuthProvider();
-
-function isStandalonePWA() {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator.standalone === true);
-}
-
-async function signInGoogleSmart() {
-  await applyPersistence();
-  try {
-    if (isStandalonePWA()) {
-      // PWA / iOS: usa redirect
-      await signInWithRedirect(auth, googleProvider);
-      return;
+    function isStandalonePWA() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             (window.navigator.standalone === true);
     }
-    // Navegador normal: intenta popup
-    await signInWithPopup(auth, googleProvider);
-  } catch (e) {
-    // Si el popup no está permitido, cae a redirect
-    const fallbackCodes = [
-      'auth/operation-not-supported-in-this-environment',
-      'auth/popup-blocked',
-    ];
-    if (fallbackCodes.includes(e.code)) {
-      await signInWithRedirect(auth, googleProvider);
-    } else {
-      alert('No se pudo iniciar con Google: ' + (e.message || e.code));
-      console.error(e);
+    async function signInGoogleSmart() {
+      await applyPersistence();
+      try {
+        if (isStandalonePWA()) {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        }
+        await signInWithPopup(auth, googleProvider);
+      } catch (e) {
+        const fallbackCodes = [
+          'auth/operation-not-supported-in-this-environment',
+          'auth/popup-blocked',
+        ];
+        if (fallbackCodes.includes(e.code)) {
+          await signInWithRedirect(auth, googleProvider);
+        } else {
+          alert('No se pudo iniciar con Google: ' + (e.message || e.code));
+          console.error(e);
+        }
+      }
     }
-  }
-}
-
-document.getElementById('google-btn')?.addEventListener('click', signInGoogleSmart);
-
+    document.getElementById('google-btn')?.addEventListener('click', signInGoogleSmart);
 
     // 👉 Modo registro
     let registering = false;
@@ -263,13 +302,14 @@ document.getElementById('google-btn')?.addEventListener('click', signInGoogleSma
 
     function toggleRegisterMode(on){
       registering = !!on;
-      if (pass2) pass2.style.display = registering ? 'block' : 'none';
-      if (submitBtn) submitBtn.textContent = registering ? 'Crear cuenta' : 'Entrar';
+      // Mostrar/ocultar wrapper del confirmar
+      window.showConfirm(registering);
+      if (submitBtn)  submitBtn.textContent  = registering ? 'Crear cuenta' : 'Entrar';
       if (registerBtn) registerBtn.textContent = registering ? 'Cancelar' : 'Crear cuenta';
     }
     registerBtn?.addEventListener('click', ()=> toggleRegisterMode(!registering));
 
-    // Login / Registro / Google
+    // Login / Registro
     document.getElementById('login-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       await applyPersistence();
@@ -278,17 +318,12 @@ document.getElementById('google-btn')?.addEventListener('click', signInGoogleSma
       if (!registering) {
         await signInWithEmailAndPassword(auth, email, pass);
       } else {
-        const p2 = pass2?.value.trim() || '';
+        const p2 = (pass2?.value || '').trim();
         if (pass !== p2) { alert('Las contraseñas no coinciden'); return; }
         await createUserWithEmailAndPassword(auth, email, pass);
         alert('¡Cuenta creada! Bienvenido/a 👋');
         toggleRegisterMode(false);
       }
-    });
-
-    document.getElementById('google-btn')?.addEventListener('click', async () => {
-      await applyPersistence();
-      await signInWithPopup(auth, new GoogleAuthProvider());
     });
 
     document.getElementById('logoutBtn')?.addEventListener('click', () => signOut(auth));
