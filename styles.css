@@ -448,3 +448,11 @@ button.primary {
 button.primary:hover {
   background-color: #2bc08f; /* verde un poco más claro en hover */
 }
+/* Swipe feedback */
+.item {
+  touch-action: pan-y;
+  will-change: transform;
+  transition: transform .18s ease;
+}
+.item.swipe-hint-left  { box-shadow: inset -6px 0 0 rgba(247, 37, 133, .35); }
+.item.swipe-hint-right { box-shadow: inset  6px 0 0 rgba(76, 201, 240, .35); }

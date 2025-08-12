@@ -30,6 +30,9 @@ if(!meta.viewMode){ meta.viewMode='day'; }
 if(!meta.chartOrientation){ meta.chartOrientation='vertical'; }
 saveMeta();
 
+// === NUEVO: para animar solo los nuevos y evitar animar todo en el primer snapshot ===
+const seenIds = new Set();
+
 function saveMeta(){ localStorage.setItem(META_KEY, JSON.stringify(meta)); }
 function toYMD(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
 function toYM(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}`; }
@@ -140,6 +143,52 @@ exportBtn.onclick=()=>{
   const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='gastos.csv'; a.click(); URL.revokeObjectURL(url);
 };
 
+// === NUEVO: swipe para editar/borrar ===
+function attachSwipeHandlers(row, record){
+  let startX=0, dx=0, swiping=false;
+
+  row.addEventListener('touchstart', (e)=>{
+    if(!e.touches?.length) return;
+    startX = e.touches[0].clientX;
+    dx = 0; swiping = true;
+    row.style.transition = '';
+    row.classList.remove('swipe-hint-left','swipe-hint-right');
+  }, {passive:true});
+
+  row.addEventListener('touchmove', (e)=>{
+    if(!swiping || !e.touches?.length) return;
+    dx = e.touches[0].clientX - startX;
+    row.style.transform = `translateX(${dx}px)`;
+    if (dx < -20) { row.classList.add('swipe-hint-left');  row.classList.remove('swipe-hint-right'); }
+    else if (dx > 20) { row.classList.add('swipe-hint-right'); row.classList.remove('swipe-hint-left'); }
+    else { row.classList.remove('swipe-hint-left','swipe-hint-right'); }
+  }, {passive:true});
+
+  row.addEventListener('touchend', async ()=>{
+    if(!swiping) return;
+    swiping = false;
+    row.style.transition = 'transform .18s ease';
+    row.classList.remove('swipe-hint-left','swipe-hint-right');
+
+    const THRESH = 80;
+    if (dx <= -THRESH) {
+      const ok = confirm('¿Borrar este movimiento?');
+      if (ok) await window.dataStore.deleteExpense(record.id);
+    } else if (dx >= THRESH) {
+      const newAmt = parseFloat(prompt('Nuevo monto', record.amount));
+      const newCat = prompt('Nueva categoría (clave):\n'+DEFAULT_CATS.slice(1).map(c=>`${c.key}=${c.name}`).join(', '), record.category);
+      const newType= prompt('Tipo (expense/income)', record.type);
+      const patch = {};
+      if(!isNaN(newAmt)) patch.amount = Math.abs(newAmt);
+      if(newCat) patch.category = newCat;
+      if(newType==='expense'||newType==='income') patch.type=newType;
+      if(Object.keys(patch).length) await window.dataStore.updateExpense(record.id, patch);
+    }
+
+    row.style.transform = '';
+  }, {passive:true});
+}
+
 // Render
 function render(){
   // toolbar labels
@@ -186,6 +235,14 @@ function render(){
         <div class="edit"><a href="#" data-id="${r.id}" class="delLink del">Borrar</a></div>
       </div>`;
     listEl.appendChild(row);
+
+    // NUEVO: swipe y animación si es nuevo
+    attachSwipeHandlers(row, r);
+    if (!seenIds.has(r.id)) {
+      row.classList.add('just-added');
+      seenIds.add(r.id);
+      setTimeout(()=>row.classList.remove('just-added'), 450);
+    }
   });
 
   listEl.querySelectorAll('.delLink').forEach(a=>a.onclick=async (e)=>{ e.preventDefault(); const id=a.getAttribute('data-id'); await window.dataStore.deleteExpense(id); });
@@ -342,7 +399,16 @@ if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigato
 
 // Realtime
 function startRealtime(){
-  const unsubscribe = window.dataStore.watchExpenses((items)=>{ records=items||[]; render(); });
+  let first = true;
+  const unsubscribe = window.dataStore.watchExpenses((items)=>{
+    // Primera hidratación: no animar los existentes
+    if (first && Array.isArray(items)) {
+      items.forEach(it => seenIds.add(it.id));
+      first = false;
+    }
+    records=items||[];
+    render();
+  });
   return unsubscribe;
 }
 populateCategories(); drawChips(); render();
