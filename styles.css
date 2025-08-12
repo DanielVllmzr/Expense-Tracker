@@ -423,3 +423,28 @@ canvas{width:100%;height:220px;background:#0f1116;border-radius:12px;border:1px 
   width: 20px;
   height: 20px;
 }
+button, .switch-card {
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+button:hover, .switch-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+/* Animación para TODOS los botones */
+button, .switch-card {
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+button:hover, .switch-card:hover {
+  transform: translateY(-1px);
+}
+
+/* Efecto especial para el botón verde de Entrar */
+button.primary {
+  background-color: #26a27b; /* verde base */
+}
+
+button.primary:hover {
+  background-color: #2bc08f; /* verde un poco más claro en hover */
+}
