@@ -610,3 +610,190 @@ button.primary:hover {
 .swipe-actions .action.edit{ background:#28b487; }  /* verde principal */
 .swipe-actions .action.del{  background:#ff6b6b; }  /* rojo borrar */
 .swipe-actions .action svg{ width:22px; height:22px; }
+/* === Swipe reveal === */
+.item-cell{
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px; /* mismo look que .item */
+  margin: 8px 0;
+}
+.item-actions{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between; /* edit a la izq, borrar a la der */
+  align-items: stretch;
+  pointer-events: none; /* los botones no tapan el drag, se habilitan más abajo */
+}
+.item-actions .action{
+  min-width: 96px;
+  padding: 0 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: #0b0c0f;          /* texto oscuro para contraste */
+  background: transparent; /* el color lo pone el contenedor */
+  pointer-events: auto;    /* habilitar click en botones */
+}
+.item-actions .edit{
+  background: #2bbf8a;     /* verde principal */
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+}
+.item-actions .del{
+  background: #ff6b6b;     /* rojo borrar */
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+/* Contenido que se arrastra */
+.item-content{
+  background: #121417; /* igual que .item */
+  position: relative;
+  z-index: 1;
+  transform: translateX(0);
+  transition: transform .18s ease;
+  will-change: transform;
+}
+
+/* Animación al agregar */
+.item-content.just-added{
+  animation: popIn .35s ease;
+}
+@keyframes popIn{
+  0%{ transform: scale(.98); opacity:.0; }
+  60%{ transform: scale(1.01); opacity:1; }
+  100%{ transform: scale(1); }
+}
+#list {
+  padding-bottom: 80px; /* deja espacio para el footer */
+}
+.main {
+  padding-bottom: 80px;
+}
+/* ==== Reservar espacio para el footer ====
+   - var(--nav-safe) = alto del footer + safe-area iOS
+*/
+:root{
+  --nav-h: 56px; /* si tu footer es más alto, súbelo aquí */
+  --nav-safe: calc(var(--nav-h) + max(16px, env(safe-area-inset-bottom)));
+}
+
+/* Deja espacio libre para que el contenido no se meta debajo del footer */
+html, body { height: 100%; }
+body { padding-bottom: var(--nav-safe); }
+
+/* Footer: altura explícita y sticky de verdad */
+footer.nav{
+  position: sticky;      /* si usas fixed, déjalo en fixed; igual funcionará con el padding del body */
+  bottom: 0;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  padding: 0 12px env(safe-area-inset-bottom);
+  background: #0b0c0f;   /* tu color de fondo */
+  z-index: 10;
+}
+
+/* Los botones del footer quepan cómodos dentro de la altura fija */
+footer.nav > button{
+  height: calc(var(--nav-h) - 16px);
+  line-height: calc(var(--nav-h) - 16px);
+}
+/* ===== Layout más compacto ===== */
+.container { max-width: 900px; margin: 0 auto; }
+
+.section { margin: 24px 0 16px; }
+.section h2 { margin: 0 0 10px; }
+
+.list { gap: 10px; margin-top: 8px; }
+
+/* Gráfica más cerca de la lista */
+#pie { 
+  display: block;
+  height: 260px;          /* era alta; bajamos un poco */
+  margin: 12px 0 8px;     /* menos aire arriba/abajo */
+}
+
+/* Botón Cerrar sesión con menos aire */
+#logoutBtn { margin: 8px auto 12px; }
+
+/* ===== Swipe: alto realista y fondo que no empuje ===== */
+.item-row   { position: relative; overflow: hidden; }
+.item-cell  { 
+  min-height: 64px;       /* antes 72/84 hacía ver “espacio extra” */
+}
+.item-controls {
+  width: 156px;           /* antes muy ancho -> separaba demasiado */
+}
+
+/* ===== Footer centrado y más cerca ===== */
+.nav{
+  max-width: 900px;
+  margin: 16px auto 32px; /* más cerca del contenido superior */
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0;             /* quita rellenos que la desalineaban */
+}
+.nav button{
+  flex: 0 1 220px;        /* ancho coherente, sin estirar de más */
+}
+/* ===== Compactar layout (overrides suaves) ===== */
+
+/* contenedor principal más estrecho y con menos “aire” vertical */
+.container{max-width:920px;margin:0 auto 16px;}
+
+/* títulos y secciones */
+.section{margin:18px 0 12px;}
+.section h2{margin:0 0 8px;}
+
+/* cards del resumen */
+.summary .card{margin:10px 0 12px;}
+
+/* formulario */
+.form{margin:8px 0 12px;}
+.form .actions{margin-top:6px;}
+.chips{margin:10px 0 6px;}
+
+/* lista */
+.list{gap:8px;margin-top:6px;}
+
+/* cada fila (menos alto/padding) */
+.item-row{min-height:60px;}
+.item-cell{padding:10px 14px;}   /* antes 14–16px hacía crecer mucho */
+.item .left .meta{opacity:.7}
+
+/* swipe: no empujar tanto la celda al mostrar botones */
+.item-controls{width:148px;}     /* era más ancho */
+.item-row.swiping .item-cell{border-radius:14px;}
+
+/* gráfica: más baja y pegada */
+#pie{
+  display:block;
+  height:220px;                  /* baja si la ves aún alta: 200–220 */
+  margin:10px 0 6px;
+}
+
+/* footer centrado y más arriba */
+.nav{
+  max-width:920px;
+  margin:10px auto 24px;         /* lo acercamos a la gráfica */
+  padding:0;
+  display:flex;justify-content:center;gap:10px;
+}
+.nav button{flex:0 1 210px;}     /* evita que se estiren raro */
+
+/* botón cerrar sesión con menos aire alrededor */
+#logoutBtn{margin:8px auto 8px;}
+
+/* ===== Afinar en pantallas chicas ===== */
+@media (max-width:768px){
+  .section{margin:16px 0 10px;}
+  .item-cell{padding:9px 12px;}
+  #pie{height:200px;margin:8px 0 6px;}
+  .nav{margin:8px auto 20px;}
+  .nav button{flex:1 1 0;}
+}
