@@ -527,3 +527,41 @@ button.primary:hover {
 .item.swipe-foreground{ position:relative; z-index:2; transition:transform .25s cubic-bezier(.22,.61,.36,1); touch-action:pan-y; }
 @keyframes popIn { from{transform:translateY(6px);opacity:0} to{transform:translateY(0);opacity:1} }
 .item.just-added{ animation:popIn .28s ease-out; }
+/* === Fix ojo password: evitar que se desplace al tocar === */
+.input-wrap { position: relative; }                 /* (por si acaso) */
+.input-wrap .control { padding-right: 44px; }       /* espacio para el ojo */
+
+.pwd-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);                      /* siempre centrado vertical */
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #8ddac1;                                   /* color base del icono */
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+/* Cuando está “mostrando” la contraseña */
+.pwd-toggle.is-on {
+  color: #2ecc9a;                                   /* verde activo */
+}
+
+/* Anula cualquier efecto global de :hover / :active que mueva el botón */
+.pwd-toggle:hover,
+.pwd-toggle:active,
+.pwd-toggle:focus {
+  transform: translateY(-50%);                      /* NO se desplaza al presionar */
+  box-shadow: none;
+  filter: none;
+}
+
+/* El SVG hereda el color; sin fondos ni bordes para que no aparezca “cuadrito” */
+.pwd-toggle svg { display: block; pointer-events: none; }
