@@ -456,3 +456,59 @@ button.primary:hover {
 }
 .item.swipe-hint-left  { box-shadow: inset -6px 0 0 rgba(247, 37, 133, .35); }
 .item.swipe-hint-right { box-shadow: inset  6px 0 0 rgba(76, 201, 240, .35); }
+/* --- Swipe cell (acciones detrás + tarjeta delante) --- */
+.swipe-cell{ position:relative; overflow:hidden; }
+.swipe-actions{
+  position:absolute; inset:0 auto 0 0; /* se ajusta con .right/.left */
+  display:flex; align-items:center; gap:8px;
+  padding:0 10px;
+  pointer-events:none; /* no capta toques si el frente está cerrado */
+}
+.swipe-actions.right{ right:0; left:auto; justify-content:flex-end; }
+.swipe-actions.left { left:0; right:auto;  justify-content:flex-start; }
+
+.swipe-actions .act{
+  pointer-events:auto;
+  display:flex; align-items:center; justify-content:center;
+  height:44px; padding:0 14px; border-radius:10px;
+  font-weight:700; border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+.swipe-actions .act.edit{ background:#28b487; color:#041d14; border-color:#1e8f6b; }
+.swipe-actions .act.delete{ background:#ff6b6b; color:#310a0a; border-color:#b84e4e; }
+
+/* La tarjeta que se mueve (tu .item de siempre) */
+.item.swipe-foreground{
+  position:relative; z-index:2;
+  transition:transform .25s cubic-bezier(.22,.61,.36,1);
+  touch-action:pan-y; will-change:transform;
+}
+
+/* opcional: un hint muy sutil cuando empiezas a arrastrar */
+.swipe-cell.hint-left  .item.swipe-foreground{ box-shadow: inset -6px 0 0 rgba(247,37,133,.22); }
+.swipe-cell.hint-right .item.swipe-foreground{ box-shadow: inset  6px 0 0 rgba(76,201,240,.22); }
+
+/* animación al aparecer (ya la usabas) */
+@keyframes popIn { from{transform:translateY(6px);opacity:0} to{transform:translateY(0);opacity:1} }
+.item.just-added{ animation:popIn .28s ease-out; }
+/* ==== Swipe: evitar solapes y asegurar espacio entre items ==== */
+.list{ display:flex; flex-direction:column; gap:8px; }           /* ya lo tenías, lo reforzamos */
+.list .swipe-cell{
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;   /* 🔑 crea su propio stacking context: no “tapa” al siguiente */
+  display: block;
+  width: 100%;
+  border-radius: 12px;   /* coincide con .item */
+}
+.list .swipe-cell + .swipe-cell{ margin-top: 0; }                 /* gap manda; fallback sin doble margen */
+
+/* Capas del swipe */
+.list .swipe-cell .swipe-actions{ z-index: 1; }
+.list .swipe-cell .item.swipe-foreground{
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
+  will-change: transform;
+}

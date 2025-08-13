@@ -1,4 +1,4 @@
-// app.js (v41)
+// app.js (v42)
 const META_KEY='gastos.meta.v6';
 const DEFAULT_CATS=[
   {key:'todas',name:'Todas',color:'#28b487'},
@@ -30,7 +30,7 @@ if(!meta.viewMode){ meta.viewMode='day'; }
 if(!meta.chartOrientation){ meta.chartOrientation='vertical'; }
 saveMeta();
 
-// === NUEVO: para animar solo los nuevos y evitar animar todo en el primer snapshot ===
+// Para animar sólo nuevos
 const seenIds = new Set();
 
 function saveMeta(){ localStorage.setItem(META_KEY, JSON.stringify(meta)); }
@@ -73,7 +73,7 @@ const newKey=document.getElementById('newKey');
 const newName=document.getElementById('newName');
 const newColor=document.getElementById('newColor');
 
-// state filtros
+// filtros
 let activeCat=null, typeFilter='all', addType='expense';
 
 function populateCategories(){
@@ -143,50 +143,66 @@ exportBtn.onclick=()=>{
   const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='gastos.csv'; a.click(); URL.revokeObjectURL(url);
 };
 
-// === NUEVO: swipe para editar/borrar ===
-function attachSwipeHandlers(row, record){
-  let startX=0, dx=0, swiping=false;
+// ===== Swipe reveal (Editar/Borrar) =====
+function attachSwipeHandlers(cell, fg, record){
+  const MAX = 140;      // ancho a revelar a cada lado
+  const KEEP = 0.4;     // umbral para “quedar abierto”
+  let startX=0, dx=0, open=0, swiping=false;
 
-  row.addEventListener('touchstart', (e)=>{
+  const setX = (x, animate=false)=>{
+    fg.style.transition = animate ? 'transform .25s cubic-bezier(.22,.61,.36,1)' : 'none';
+    fg.style.transform  = `translateX(${x}px)`;
+  };
+
+  cell.addEventListener('touchstart',(e)=>{
     if(!e.touches?.length) return;
+    swiping = true; dx = 0;
     startX = e.touches[0].clientX;
-    dx = 0; swiping = true;
-    row.style.transition = '';
-    row.classList.remove('swipe-hint-left','swipe-hint-right');
+    fg.style.transition = 'none';
   }, {passive:true});
 
-  row.addEventListener('touchmove', (e)=>{
+  cell.addEventListener('touchmove',(e)=>{
     if(!swiping || !e.touches?.length) return;
-    dx = e.touches[0].clientX - startX;
-    row.style.transform = `translateX(${dx}px)`;
-    if (dx < -20) { row.classList.add('swipe-hint-left');  row.classList.remove('swipe-hint-right'); }
-    else if (dx > 20) { row.classList.add('swipe-hint-right'); row.classList.remove('swipe-hint-left'); }
-    else { row.classList.remove('swipe-hint-left','swipe-hint-right'); }
+    dx = e.touches[0].clientX - startX + open;
+    dx = Math.max(-MAX, Math.min(MAX, dx));
+    setX(dx, false);
   }, {passive:true});
 
-  row.addEventListener('touchend', async ()=>{
-    if(!swiping) return;
-    swiping = false;
-    row.style.transition = 'transform .18s ease';
-    row.classList.remove('swipe-hint-left','swipe-hint-right');
-
-    const THRESH = 80;
-    if (dx <= -THRESH) {
-      const ok = confirm('¿Borrar este movimiento?');
-      if (ok) await window.dataStore.deleteExpense(record.id);
-    } else if (dx >= THRESH) {
-      const newAmt = parseFloat(prompt('Nuevo monto', record.amount));
-      const newCat = prompt('Nueva categoría (clave):\n'+DEFAULT_CATS.slice(1).map(c=>`${c.key}=${c.name}`).join(', '), record.category);
-      const newType= prompt('Tipo (expense/income)', record.type);
-      const patch = {};
-      if(!isNaN(newAmt)) patch.amount = Math.abs(newAmt);
-      if(newCat) patch.category = newCat;
-      if(newType==='expense'||newType==='income') patch.type=newType;
-      if(Object.keys(patch).length) await window.dataStore.updateExpense(record.id, patch);
-    }
-
-    row.style.transform = '';
+  cell.addEventListener('touchend',()=>{
+    if(!swiping) return; swiping=false;
+    let target = 0;
+    if (dx <= -MAX*KEEP) target = -MAX;    // mostrar Borrar (izquierda)
+    else if (dx >= MAX*KEEP) target = MAX; // mostrar Editar (derecha)
+    open = target;
+    setX(target, true);
   }, {passive:true});
+
+  // Tap para cerrar si está abierto
+  fg.addEventListener('click', ()=>{
+    if (open !== 0){ open = 0; setX(0, true); }
+  });
+
+  // Acciones
+  const btnEdit = cell.querySelector('.act-edit');
+  const btnDel  = cell.querySelector('.act-del');
+
+  btnEdit?.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const newAmt = parseFloat(prompt('Nuevo monto', record.amount));
+    const newCat = prompt('Nueva categoría (clave):\n'+DEFAULT_CATS.slice(1).map(c=>`${c.key}=${c.name}`).join(', '), record.category);
+    const newType= prompt('Tipo (expense/income)', record.type);
+    const patch={};
+    if(!isNaN(newAmt)) patch.amount=Math.abs(newAmt);
+    if(newCat) patch.category=newCat;
+    if(newType==='expense'||newType==='income') patch.type=newType;
+    if(Object.keys(patch).length) await window.dataStore.updateExpense(record.id, patch);
+    open = 0; setX(0, true);
+  });
+
+  btnDel?.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    if(confirm('¿Borrar este movimiento?')) await window.dataStore.deleteExpense(record.id);
+  });
 }
 
 // Render
@@ -222,31 +238,69 @@ function render(){
   listEl.innerHTML='';
   filtered.forEach(r=>{
     const c=allCats().find(x=>x.key===r.category) || allCats().at(-1);
-    const row=document.createElement('div'); row.className='item';
     const date=new Date(r.createdAt).toLocaleString();
     const sign=r.type==='income'?'+':'-';
-    row.innerHTML=`
+
+    // --- Celda swipe: acciones detrás + tarjeta delante ---
+    const cell = document.createElement('div');
+cell.className = 'swipe-cell';
+cell.style.marginBottom = '8px';     // fallback si el gap no aplica por caché
+cell.style.borderRadius = '12px';
+
+    // mínimos estilos inline por si faltan las clases en CSS
+    cell.style.position='relative'; cell.style.overflow='hidden';
+
+    const actionsLeft  = document.createElement('div');
+    actionsLeft.className='swipe-actions left';
+    actionsLeft.style.position='absolute'; actionsLeft.style.left='8px'; actionsLeft.style.top='0';
+    actionsLeft.style.bottom='0'; actionsLeft.style.display='flex'; actionsLeft.style.alignItems='center';
+
+    const actionsRight = document.createElement('div');
+    actionsRight.className='swipe-actions right';
+    actionsRight.style.position='absolute'; actionsRight.style.right='8px'; actionsRight.style.top='0';
+    actionsRight.style.bottom='0'; actionsRight.style.display='flex'; actionsRight.style.alignItems='center';
+
+    const btnEdit = document.createElement('button');
+    btnEdit.className='act-edit';
+    btnEdit.textContent='Editar';
+    btnEdit.style.cssText='height:40px;padding:0 12px;border-radius:10px;font-weight:700;border:1px solid #1e8f6b;background:#28b487;color:#041d14;';
+
+    const btnDel = document.createElement('button');
+    btnDel.className='act-del';
+    btnDel.textContent='Borrar';
+    btnDel.style.cssText='height:40px;padding:0 12px;border-radius:10px;font-weight:700;border:1px solid #b84e4e;background:#ff6b6b;color:#310a0a;margin-left:8px;';
+
+    actionsLeft.appendChild(btnEdit);
+    actionsRight.appendChild(btnDel);
+
+    const fg = document.createElement('div');
+    fg.className = 'item swipe-foreground';
+    fg.style.position='relative'; fg.style.zIndex='2';
+    fg.style.transition='transform .25s cubic-bezier(.22,.61,.36,1)';
+    fg.style.willChange='transform';
+    fg.innerHTML = `
       <div class="left">
         <span class="dot" style="background:${c?.color||'#888'}"></span>
         <div><div>${c?.name||r.category}</div><div class="meta">${date}${r.note?(' · '+r.note):''}</div></div>
       </div>
       <div>
         <div class="amt">${sign}${formatMoney(Math.abs(r.amount))}</div>
-        <div class="edit"><a href="#" data-id="${r.id}" class="delLink del">Borrar</a></div>
       </div>`;
-    listEl.appendChild(row);
 
-    // NUEVO: swipe y animación si es nuevo
-    attachSwipeHandlers(row, r);
+    cell.append(actionsLeft, actionsRight, fg);
+    listEl.appendChild(cell);
+
+    attachSwipeHandlers(cell, fg, r);
+
+    // Animación de aparición sólo en nuevos
     if (!seenIds.has(r.id)) {
-      row.classList.add('just-added');
+      fg.classList.add('just-added');
       seenIds.add(r.id);
-      setTimeout(()=>row.classList.remove('just-added'), 450);
+      setTimeout(()=>fg.classList.remove('just-added'), 450);
     }
   });
 
-  listEl.querySelectorAll('.delLink').forEach(a=>a.onclick=async (e)=>{ e.preventDefault(); const id=a.getAttribute('data-id'); await window.dataStore.deleteExpense(id); });
-
+  // (ya no hay links "Borrar" en la tarjeta)
   if(meta.chartOrientation==='horizontal'){ drawBarsHorizontal(filtered);} else { drawBarsVertical(filtered); }
   updateBudgetAdvice();
 }
@@ -394,14 +448,13 @@ if(addCatBtn){
   window.addEventListener('touchend', async ()=>{ if(!pulling) return; pulling=false; ptr.style.transform=''; if(pulled>threshold){ setTimeout(()=>location.reload(),300); } else { ptr.classList.remove('show'); } setTimeout(()=>{ ptr.classList.remove('spin'); ptr.classList.remove('show'); },600); });
 })();
 
-// Service worker (nuevo)
+// Service worker
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./sw-v41.js'); }); }
 
 // Realtime
 function startRealtime(){
   let first = true;
   const unsubscribe = window.dataStore.watchExpenses((items)=>{
-    // Primera hidratación: no animar los existentes
     if (first && Array.isArray(items)) {
       items.forEach(it => seenIds.add(it.id));
       first = false;
