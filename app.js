@@ -1,4 +1,4 @@
-// app.js (v42 - swipe reveal)
+// app.js (v43 - swipe iOS-like con acciones detrás)
 const META_KEY='gastos.meta.v6';
 const DEFAULT_CATS=[
   {key:'todas',name:'Todas',color:'#28b487'},
@@ -143,59 +143,67 @@ exportBtn.onclick=()=>{
   const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='gastos.csv'; a.click(); URL.revokeObjectURL(url);
 };
 
-// ==== Swipe reveal helpers ====
-function attachSwipeReveal(cell, contentEl){
-  const leftWidth  = 96; // px visibles para EDITAR
-  const rightWidth = 96; // px visibles para BORRAR
-  let startX=0, dx=0, openX=0, dragging=false;
+/* =========================
+   Swipe iOS‑like (acciones detrás)
+========================= */
+function attachSwipeHandlers(cell, record){
+  const content = cell.querySelector('.swipe-content');
+  const editBtn  = cell.querySelector('.act.edit');
+  const delBtn   = cell.querySelector('.act.del');
 
-  // cierra cualquier otro item abierto
-  function closeOthers(){
-    document.querySelectorAll('.item-cell.open-left, .item-cell.open-right').forEach(el=>{
-      if(el!==cell){ el.classList.remove('open-left','open-right'); el.querySelector('.item-content').style.transform='translateX(0px)'; }
-    });
-  }
+  let startX=0, dx=0, swiping=false;
+  const MAX = 120;   // apertura máxima a cada lado
+  const SNAP = 90;   // umbral para “quedar abierto”
 
-  // abrir fijo a izquierda o derecha
-  function snap(to){
-    if(to==='left'){ openX = leftWidth;  cell.classList.add('open-left');  cell.classList.remove('open-right'); }
-    else if(to==='right'){ openX = -rightWidth; cell.classList.add('open-right'); cell.classList.remove('open-left'); }
-    else { openX = 0; cell.classList.remove('open-left','open-right'); }
-    contentEl.style.transition='transform .18s ease';
-    contentEl.style.transform = `translateX(${openX}px)`;
-    setTimeout(()=>contentEl.style.transition='', 190);
-  }
+  // Acciones
+  if (delBtn) delBtn.onclick = async (e)=>{
+    e.stopPropagation();
+    const ok = confirm('¿Borrar este movimiento?');
+    if (ok) await window.dataStore.deleteExpense(record.id);
+  };
+  if (editBtn) editBtn.onclick = async (e)=>{
+    e.stopPropagation();
+    const newAmt = parseFloat(prompt('Nuevo monto', record.amount));
+    const newCat = prompt('Nueva categoría (clave):\n'+DEFAULT_CATS.slice(1).map(c=>`${c.key}=${c.name}`).join(', '), record.category);
+    const newType= prompt('Tipo (expense/income)', record.type);
+    const patch = {};
+    if(!isNaN(newAmt)) patch.amount = Math.abs(newAmt);
+    if(newCat) patch.category = newCat;
+    if(newType==='expense'||newType==='income') patch.type=newType;
+    if(Object.keys(patch).length) await window.dataStore.updateExpense(record.id, patch);
+  };
 
-  cell.addEventListener('touchstart', e=>{
+  cell.addEventListener('touchstart', (e)=>{
     if(!e.touches?.length) return;
-    closeOthers();
-    dragging=true;
+    // cerrar otros abiertos
+    document.querySelectorAll('.swipe-cell').forEach(el=>{
+      if(el!==cell) el.querySelector('.swipe-content').style.transform='';
+    });
     startX = e.touches[0].clientX;
-    dx = 0;
-    contentEl.style.transition='';
+    dx = 0; swiping = true;
+    content.style.transition = '';
   }, {passive:true});
 
-  cell.addEventListener('touchmove', e=>{
-    if(!dragging) return;
-    dx = e.touches[0].clientX - startX + openX;
-    // limitar dentro de los anchos disponibles
-    dx = Math.max(-rightWidth, Math.min(leftWidth, dx));
-    contentEl.style.transform = `translateX(${dx}px)`;
+  cell.addEventListener('touchmove', (e)=>{
+    if(!swiping || !e.touches?.length) return;
+    dx = e.touches[0].clientX - startX;
+    if (dx >  MAX) dx =  MAX;
+    if (dx < -MAX) dx = -MAX;
+    content.style.transform = `translateX(${dx}px)`;
   }, {passive:true});
 
   cell.addEventListener('touchend', ()=>{
-    if(!dragging) return;
-    dragging=false;
-    const threshold = 48;
-    if(dx > threshold) snap('left');
-    else if(dx < -threshold) snap('right');
-    else snap(null);
-  });
-
-  // Click fuera cierra
-  document.addEventListener('click', (e)=>{
-    if(!cell.contains(e.target)) snap(null);
-  });
+    if(!swiping) return;
+    swiping = false;
+    content.style.transition = 'transform .18s cubic-bezier(.2,.8,.2,1)';
+    if (dx >= SNAP) {
+      content.style.transform = `translateX(${MAX}px)`;   // revela editar (izquierda)
+    } else if (dx <= -SNAP) {
+      content.style.transform = `translateX(${-MAX}px)`;  // revela borrar (derecha)
+    } else {
+      content.style.transform = '';
+    }
+  }, {passive:true});
 }
 
 // ==== Render ====
@@ -234,51 +242,53 @@ function render(){
     const date    = new Date(r.createdAt).toLocaleString();
     const sign    = r.type==='income'?'+':'-';
 
-    // Celda con reveal
+    // Celda swipe: acciones detrás + contenido delante
     const cell = document.createElement('div');
-    cell.className = 'item-cell';
+    cell.className = 'swipe-cell';
 
-    // Acciones “debajo”
-    const actions = document.createElement('div');
-    actions.className = 'item-actions';
-    actions.innerHTML = `
-      <button class="action edit" data-id="${r.id}" title="Editar">Editar</button>
-      <button class="action del"  data-id="${r.id}" title="Borrar">Borrar</button>
-    `;
+    cell.innerHTML = `
+      <div class="swipe-actions">
+        <button class="act edit" title="Editar" aria-label="Editar">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+          </svg>
+        </button>
+        <button class="act del" title="Borrar" aria-label="Borrar">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
 
-    // Contenido “encima” (el que se arrastra)
-    const row = document.createElement('div');
-    row.className = 'item-content item';
-    row.innerHTML = `
-      <div class="left">
-        <span class="dot" style="background:${catDef?.color||'#888'}"></span>
+      <div class="swipe-content item">
+        <div class="left">
+          <span class="dot" style="background:${catDef?.color||'#888'}"></span>
+          <div>
+            <div>${catDef?.name||r.category}</div>
+            <div class="meta">${date}${r.note?(' · '+r.note):''}</div>
+          </div>
+        </div>
         <div>
-          <div>${catDef?.name||r.category}</div>
-          <div class="meta">${date}${r.note?(' · '+r.note):''}</div>
+          <div class="amt">${sign}${formatMoney(Math.abs(r.amount))}</div>
         </div>
       </div>
-      <div>
-        <div class="amt">${sign}${formatMoney(Math.abs(r.amount))}</div>
-      </div>
     `;
 
-    cell.appendChild(actions);
-    cell.appendChild(row);
     listEl.appendChild(cell);
 
-    // Swipe reveal
-    attachSwipeReveal(cell, row);
+    // Swipe
+    attachSwipeHandlers(cell, r);
 
     // Animación si es nuevo
     if (!seenIds.has(r.id)) {
-      row.classList.add('just-added');
+      cell.querySelector('.swipe-content').classList.add('just-added');
       seenIds.add(r.id);
-      setTimeout(()=>row.classList.remove('just-added'), 450);
+      setTimeout(()=>cell.querySelector('.swipe-content').classList.remove('just-added'), 450);
     }
 
-    // Click acciones
-    actions.querySelector('.edit')?.addEventListener('click', async ()=>{
-      // editor simple (igual que antes, pero más prolijo)
+    // Acciones (click)
+    cell.querySelector('.act.edit')?.addEventListener('click', async (e)=>{
+      e.stopPropagation();
       const newAmt = parseFloat(prompt('Nuevo monto', r.amount));
       const newCat = prompt('Nueva categoría (clave):\n'+DEFAULT_CATS.slice(1).map(c=>`${c.key}=${c.name}`).join(', '), r.category);
       const newType= prompt('Tipo (expense/income)', r.type);
@@ -289,7 +299,8 @@ function render(){
       if(Object.keys(patch).length) await window.dataStore.updateExpense(r.id, patch);
     });
 
-    actions.querySelector('.del')?.addEventListener('click', async ()=>{
+    cell.querySelector('.act.del')?.addEventListener('click', async (e)=>{
+      e.stopPropagation();
       if(confirm('¿Borrar este movimiento?')) await window.dataStore.deleteExpense(r.id);
     });
   });
