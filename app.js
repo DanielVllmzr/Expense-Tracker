@@ -1,4 +1,4 @@
-// app.js (v42 menu+swipe)
+// app.js (stable, sin footer)
 const META_KEY='gastos.meta.v6';
 const DEFAULT_CATS=[
   {key:'todas',name:'Todas',color:'#28b487'},
@@ -56,9 +56,6 @@ const monthBtn=document.getElementById('monthBtn');
 const datePicker=document.getElementById('datePicker');
 const dateBtn=document.getElementById('dateBtn');
 const dateBtnTxt=document.getElementById('dateBtnTxt');
-const showAllBtn=document.getElementById('showAll');
-const showIncomeBtn=document.getElementById('showIncome');
-const showExpenseBtn=document.getElementById('showExpense');
 const segExpense=document.getElementById('segExpense');
 const segIncome=document.getElementById('segIncome');
 const totExpenses=document.getElementById('totExpenses');
@@ -201,7 +198,7 @@ function attachSwipeReveal(cell, contentEl){
 function render(){
   monthBtn.textContent = meta.viewMode==='month' ? 'Día' : 'Mes';
   datePicker.value = meta.selectedDate;
-  dateBtnTxt.textContent = fmtDateBtn(meta.selectedDate);
+  if (dateBtnTxt) dateBtnTxt.textContent = fmtDateBtn(meta.selectedDate);
   periodEl.textContent = meta.viewMode==='month' ? `Mes: ${toYM(new Date(meta.selectedDate))}` : `Día: ${meta.selectedDate}`;
 
   const rf=meta.rangeFilter||{}; const start=rf.start?new Date(rf.start):null; const end=rf.end?new Date(rf.end):null;
@@ -337,14 +334,9 @@ function updateBudgetAdvice(){
   document.getElementById('budgetNote').textContent=`Presupuesto sugerido (últimos 30 días +5%): Total ${formatMoney(global)} · `+lines.join(' · ');
 }
 
-/* ===== Footer filtros ===== */
-showAllBtn.onclick=()=>{ typeFilter='all'; render(); };
-showIncomeBtn.onclick=()=>{ typeFilter='income'; render(); };
-showExpenseBtn.onclick=()=>{ typeFilter='expense'; render(); };
-
 /* ===== Fecha ===== */
 datePicker.value = meta.selectedDate;
-dateBtnTxt.textContent = fmtDateBtn(meta.selectedDate);
+if (dateBtnTxt) dateBtnTxt.textContent = fmtDateBtn(meta.selectedDate);
 dateBtn.onclick=()=>{
   try{ datePicker.showPicker?.(); }catch{ /* iOS */ }
   datePicker.focus(); datePicker.click();
@@ -361,8 +353,9 @@ chartOrientation.onchange=()=>{ meta.chartOrientation=chartOrientation.value; sa
 normalizeBtn.onclick=()=>alert('Acción masiva deshabilitada para evitar sobrescrituras. Editá cada gasto desde la lista.');
 
 /* ===== Gestionar categorías ===== */
-if(manageCatsBtn){
-  manageCatsBtn.onclick=()=>{
+const catsPanelToggle = manageCatsBtn ? manageCatsBtn : null;
+if(catsPanelToggle){
+  catsPanelToggle.onclick=()=>{
     if(catsPanel.hasAttribute('hidden')){ catsPanel.removeAttribute('hidden'); catsPanel.scrollIntoView({behavior:'smooth', block:'start'}); }
     else { catsPanel.setAttribute('hidden',''); }
   };
@@ -419,7 +412,8 @@ if(addCatBtn){
 
 /* ===== Pull to refresh ===== */
 (function(){
-  const ptr=document.getElementById('ptr'); const bubble=ptr.querySelector('.bubble');
+  const ptr=document.getElementById('ptr'); const bubble=ptr?.querySelector?.('.bubble');
+  if(!ptr || !bubble) return;
   let startY=0, pulling=false, pulled=0, threshold=70;
   window.addEventListener('touchstart',(e)=>{ if(document.scrollingElement.scrollTop===0){ startY=e.touches[0].clientY; pulling=true; pulled=0; } }, {passive:true});
   window.addEventListener('touchmove',(e)=>{ if(!pulling) return; const dy=e.touches[0].clientY-startY; if(dy>0){ pulled=Math.min(dy,120); ptr.style.transform=`translateY(${pulled/3}px)`; ptr.classList.add('show'); bubble.textContent = pulled>threshold ? '✓' : '↻'; } }, {passive:true});
@@ -431,14 +425,16 @@ if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigato
 
 /* ===== Side menu logic ===== */
 function openMenu(){
+  if(!sideMenu || !sideMask) return;
   sideMenu.classList.add('open'); sideMenu.setAttribute('aria-hidden','false');
   sideMask.hidden=false; requestAnimationFrame(()=>sideMask.classList.add('show'));
 }
 function closeMenu(){
+  if(!sideMenu || !sideMask) return;
   sideMenu.classList.remove('open'); sideMenu.setAttribute('aria-hidden','true');
   sideMask.classList.remove('show'); setTimeout(()=>{ sideMask.hidden=true; },180);
 }
-function toggleMenu(){ if(sideMenu.classList.contains('open')) closeMenu(); else openMenu(); }
+function toggleMenu(){ if(sideMenu?.classList.contains('open')) closeMenu(); else openMenu(); }
 menuBtn?.addEventListener('click', toggleMenu);
 sideMask?.addEventListener('click', closeMenu);
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
@@ -447,7 +443,6 @@ themeToggle?.addEventListener('click', ()=>{
   const on=!themeToggle.classList.contains('on');
   themeToggle.classList.toggle('on', on);
   themeToggle.setAttribute('aria-pressed', String(on));
-  // Si en el futuro añades un tema claro, aquí puedes alternar body.dataset.theme = on?'light':'dark';
 });
 
 menuExport?.addEventListener('click', ()=>{ closeMenu(); setTimeout(()=>exportBtn.click(), 180); });
