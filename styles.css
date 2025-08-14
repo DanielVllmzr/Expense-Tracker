@@ -565,3 +565,75 @@ button.primary:hover {
 
 /* El SVG hereda el color; sin fondos ni bordes para que no aparezca “cuadrito” */
 .pwd-toggle svg { display: block; pointer-events: none; }
+/* === Menú (hamburger) y Drawer lateral === */
+.icon-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:36px; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.08);
+  background: #121417; cursor:pointer; margin-left:8px;
+}
+.icon-btn:hover{ transform:translateY(-1px); transition:transform .15s ease; }
+
+.drawer{
+  position: fixed; inset: 0 0 0 auto; width: 84vw; max-width: 360px;
+  background: #0e1013; border-left:1px solid rgba(255,255,255,.06);
+  transform: translateX(100%); transition: transform .22s ease;
+  display:flex; flex-direction:column; z-index: 9999;
+}
+.drawer.open{ transform: translateX(0); }
+
+.drawer-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px; border-bottom:1px solid rgba(255,255,255,.06);
+}
+.drawer-body{ padding:8px; display:flex; flex-direction:column; gap:8px; }
+.drawer-item{
+  text-align:left; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.08);
+  background:#14171c; color:#e9edf5; cursor:pointer;
+}
+.drawer-item:hover{ transform: translateY(-1px); }
+
+.drawer-mask{
+  position: fixed; inset:0; background: rgba(0,0,0,.45); backdrop-filter: blur(1.5px);
+  z-index: 9998;
+}
+
+/* Toggle de tema (bombillo) */
+.theme-toggle{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+.theme-toggle input{ display:none; }
+.theme-toggle .bulb{
+  width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid rgba(255,255,255,.08); background:#121417;
+}
+.theme-toggle .lbl{ font-size:14px; opacity:.9; }
+
+/* (Opcional) Si más tarde querés tema claro, podés redefinir colores bajo esta clase */
+.theme-light body{ background:#ffffff; color:#111; }
+/* Fin Drawer */
+/* === Menú (hamburguesa) igual al botón primary === */
+.btn-menu { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; }
+.btn-menu .hamb { pointer-events:none; }
+
+/* Drawer: bombillo más discreto y “rayitas” cuando está en modo claro */
+.drawer-head .icon-btn { width:32px; height:32px; border-radius:10px; }
+.drawer-head .bulb { width:18px; height:18px; }
+#modeBtn.on .rays { opacity:1; transition:opacity .15s ease; }
+
+/* Ítems del menú */
+.menu-item { width:100%; text-align:left; padding:10px 12px; border-radius:12px;
+  background:#1c1f24; border:1px solid #2a2f36; color:#e8edf3; }
+.menu-item:hover { filter:brightness(1.06); }
+.menu-item.danger { background:#3a1010; border-color:#5a1a1a; color:#ff6b6b; }
+
+/* Modal de categorías */
+.modal[hidden]{display:none;}
+.modal { position:fixed; inset:0; z-index:1000; }
+.modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.45); }
+.modal-card { position:absolute; right:0; top:0; bottom:0; width:min(520px, 92vw);
+  background:#111418; border-left:1px solid #2a2f36; display:flex; flex-direction:column; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid #2a2f36; }
+.modal-body { overflow:auto; padding:8px 10px; }
+.modal .icon-btn { width:32px; height:32px; border-radius:10px; }
+
+/* Botón Google: evita heredar colores de estados .danger, etc. */
+#glogin, #google-btn { color:inherit; }
+.gbtn .gmark path { stroke:none !important; }

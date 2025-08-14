@@ -12,6 +12,83 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles.css">
   <meta name="apple-mobile-web-app-title" content="Expense Tracker">
+
+  <!-- Ajustes mínimos sin tocar tu CSS principal -->
+  <style>
+    :root{
+      --accent:#27b386; /* verde principal coherente con tu “Agregar” */
+      --panel-w: min(360px, 85vw);
+    }
+
+    /* Topbar: botón de fecha “con icono” y botón menú verde */
+    .topbar .right{ display:flex; gap:8px; align-items:center; }
+    .pill, .control{ height:36px; }
+    .with-icon{ display:inline-flex; align-items:center; gap:.5rem; }
+    #dateBtn svg{ width:18px; height:18px; color:var(--accent); flex:0 0 auto; }
+    #dateBtn{ padding-inline:12px; }
+
+    #menuBtn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:36px; border-radius:10px;
+      background:var(--accent); color:#0b0c0f; border:1px solid #1d6d58;
+      box-shadow:0 1px 0 rgba(0,0,0,.15) inset, 0 0 0 1px rgba(255,255,255,.06);
+    }
+    #menuBtn svg{ width:18px; height:18px; color:#0c1512; }
+
+    /* Panel lateral */
+    .sidepanel-mask{
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      backdrop-filter:saturate(120%) blur(2px);
+      opacity:0; pointer-events:none; transition:opacity .18s ease;
+    }
+    .sidepanel-mask.show{ opacity:1; pointer-events:auto; }
+
+    .sidepanel{
+      position:fixed; top:0; right:0; height:100%; width:var(--panel-w);
+      background:#0f1216; border-left:1px solid rgba(255,255,255,.06);
+      transform:translateX(100%); transition:transform .22s ease;
+      z-index:80; display:flex; flex-direction:column;
+    }
+    .sidepanel.open{ transform:translateX(0); }
+    .panel-header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px; gap:8px; border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .panel-header h3{ margin:0; font-size:18px; }
+    .panel-actions{ padding:12px; display:grid; gap:10px; }
+    .panel-actions .danger{
+      background:#752b2b; border:1px solid #a33d3d; color:#fff;
+    }
+
+    /* Bombillo toggle */
+    #themeToggle{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:34px; height:34px; border-radius:10px;
+      border:1px solid rgba(255,255,255,.08);
+      background:#12161b; color:#cfd6de;
+    }
+    #themeToggle svg{ width:20px; height:20px; }
+    #themeToggle .rays{ opacity:.0; transition:opacity .15s ease; }
+    #themeToggle.on .rays{ opacity:1; } /* “rayitas” visibles en modo claro */
+
+    /* ===== Swipe reveal (estructura mínima) ===== */
+    .item-cell{ position:relative; overflow:hidden; border-radius:12px; }
+    .item-actions{
+      position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center;
+      padding:0 10px; pointer-events:none;
+    }
+    .item-actions .action{
+      pointer-events:auto;
+      width:48px; height:36px; border-radius:10px; border:1px solid rgba(0,0,0,.2);
+      display:inline-flex; align-items:center; justify-content:center; color:#fff;
+    }
+    .item-actions .edit{ background:var(--accent); border-color:#1d6d58; }
+    .item-actions .del{ background:#d44; border-color:#a33; }
+    .item-content{ position:relative; z-index:2; transition:transform .18s ease; }
+
+    /* Popover de categorías: por si quieres que “salte arriba” */
+    #catsPanel{ position:relative; z-index:85; }
+  </style>
 </head>
 <body>
   <!-- Splash de arranque -->
@@ -41,7 +118,6 @@
         </button>
       </div>
 
-      <!-- Confirmar contraseña (se muestra solo para “Crear cuenta”) -->
       <div id="pw2wrap" class="input-wrap" style="display:none;">
         <input id="password2" type="password" placeholder="Confirmar contraseña" class="control" />
         <button type="button" class="pwd-toggle" data-target="password2" aria-label="Mostrar contraseña">
@@ -56,12 +132,9 @@
     </form>
 
     <div class="login-row">
-      <button id="google-btn" class="google-icon-btn" aria-label="Entrar con Google">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3" width="24" height="24">
-          <path fill="#4285F4" d="M533.5 278.4c0-17.4-1.6-34.1-4.7-50.4H272v95.4h146.9c-6.3 34.1-25.1 63-53.6 82.3l86.7 67c50.6-46.6 81.5-115.2 81.5-194.3z"/>
-          <path fill="#34A853" d="M272 544.3c72.7 0 133.7-24 178.2-65.4l-86.7-67c-24.1 16.2-54.9 25.8-91.5 25.8-70.3 0-129.8-47.5-151.1-111.3l-89.7 69.2c43.5 86 133.2 148.7 240.8 148.7z"/>
-          <path fill="#FBBC05" d="M120.9 326.4c-9.7-28.9-9.7-59.9 0-88.8l-89.7-69.2C5.6 208.4 0 241.4 0 272.2s5.6 63.8 31.2 103.8l89.7-69.6z"/>
-          <path fill="#EA4335" d="M272 107.7c39.6 0 75.1 13.6 103.1 40.3l77.1-77.1C405.5 24 344.5 0 272 0 164.4 0 74.7 62.7 31.2 148.7l89.7 69.2C142.2 155.2 201.7 107.7 272 107.7z"/>
+      <button id="google-btn" class="ghost google-only" title="Entrar con Google" aria-label="Entrar con Google">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path fill="#EA4335" d="M12 10.2v3.6h5.1c-.2 1.2-1.5 3.6-5.1 3.6-3.1 0-5.6-2.6-5.6-5.8S8.9 5.8 12 5.8c1.8 0 3.1.8 3.8 1.5l2.6-2.5C17 3.3 14.7 2.4 12 2.4 6.9 2.4 2.8 6.5 2.8 11.6S6.9 20.8 12 20.8c6.9 0 9.6-4.8 8.9-9.2H12z"/>
         </svg>
       </button>
       <button id="registerBtn" class="ghost" type="button">Crear cuenta</button>
@@ -81,9 +154,24 @@
       <div class="topbar">
         <h1>Gastos</h1>
         <div class="right">
-          <input id="datePicker" class="control" type="date">
+          <!-- Botón de fecha con icono -->
+          <button id="dateBtn" class="control pill with-icon" type="button" title="Elegir fecha">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9ZM6 6H4v2h16V6h-2V7a1 1 0 1 1-2 0V6H8v1a1 1 0 0 1-2 0V6Z"/>
+            </svg>
+            <span id="dateBtnTxt">—</span>
+          </button>
+          <!-- input real (oculto) para el picker nativo -->
+          <input id="datePicker" class="control" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;">
           <button class="control" id="todayBtn">Hoy</button>
           <button class="control" id="monthBtn">Mes</button>
+
+          <!-- Botón menú -->
+          <button id="menuBtn" class="control" type="button" aria-label="Menú">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7.5h16M4 12h16M4 16.5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+          </button>
         </div>
       </div>
       <div class="summary">
@@ -143,7 +231,6 @@
           <button class="ghost" id="manageCatsBtn" type="button">Gestionar</button>
         </div>
 
-        <!-- Panel de categorías (oculto por defecto) -->
         <div id="catsPanel" class="cats-panel" hidden>
           <div class="cats-head">
             <div>Color</div><div>Clave</div><div>Nombre</div><div>Acciones</div>
@@ -189,7 +276,35 @@
 
   </section>
 
-  <!-- 1) Inicializa Firebase -->
+  <!-- Panel lateral + overlay -->
+  <div id="sideMask" class="sidepanel-mask" hidden></div>
+  <aside id="sideMenu" class="sidepanel" aria-hidden="true">
+    <div class="panel-header">
+      <h3>Menú</h3>
+      <button id="themeToggle" type="button" title="Modo claro/oscuro" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 1 6 6c0 2.7-1.8 5-4.3 5.7V17a1.7 1.7 0 0 1-3.4 0v-2.3A6 6 0 0 1 12 3Z" fill="currentColor"/>
+          <g class="rays" fill="currentColor">
+            <circle cx="12" cy="1.8" r="1"/>
+            <circle cx="12" cy="22.2" r="1"/>
+            <circle cx="1.8" cy="12" r="1"/>
+            <circle cx="22.2" cy="12" r="1"/>
+            <circle cx="4.2" cy="4.2" r="1"/>
+            <circle cx="19.8" cy="19.8" r="1"/>
+            <circle cx="19.8" cy="4.2" r="1"/>
+            <circle cx="4.2" cy="19.8" r="1"/>
+          </g>
+        </svg>
+      </button>
+    </div>
+    <nav class="panel-actions">
+      <button id="menuExport" class="ghost" type="button">Exportar CSV</button>
+      <button id="menuCats" class="ghost" type="button">Gestionar categorías</button>
+      <button id="menuLogout" class="danger" type="button">Cerrar sesión</button>
+    </nav>
+  </aside>
+
+  <!-- Firebase + app -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
     import {
@@ -217,10 +332,7 @@
     const appView = document.getElementById('app');
     const boot    = document.getElementById('boot');
 
-    // Captura resultado de redirect si lo hubo
-    getRedirectResult(auth).catch((e) => {
-      console.warn('Google redirect error:', e?.code || e);
-    });
+    getRedirectResult(auth).catch((e) => console.warn('Google redirect error:', e?.code || e));
 
     function show(view){
       if (boot)    boot.style.display = 'none';
@@ -230,11 +342,9 @@
       if (view === 'login' && login)   login.style.display = 'block';
       if (view === 'app'   && appView) appView.style.display = 'block';
     }
-
-    // Mostrar pantalla de carga al iniciar
     show('boot');
 
-    // Persistencia (Recordarme)
+    // Persistencia
     const rememberToggle = document.getElementById('rememberToggle');
     rememberToggle.checked = localStorage.getItem('rememberLogin') === '1';
     async function applyPersistence(){
@@ -246,77 +356,53 @@
     rememberToggle.addEventListener('change', applyPersistence);
     applyPersistence();
 
-    // === Ojo mostrar/ocultar contraseña (inicializa ya) ===
-    function wirePasswordToggles(){
-      document.querySelectorAll('.pwd-toggle').forEach((btn)=>{
-        const targetId = btn.getAttribute('data-target');
-        const input = document.getElementById(targetId);
-        if(!input) return;
-        const update = (show) => {
-          input.type = show ? 'text' : 'password';
-          btn.classList.toggle('is-on', show);
-          btn.setAttribute('aria-pressed', String(show));
-          btn.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
-        };
-        btn.addEventListener('click', ()=>{
-          const show = input.type === 'password';
-          update(show);
-        });
-      });
-    }
-    wirePasswordToggles();
-
-    // Helper para mostrar/ocultar el wrapper del confirmar
-    window.showConfirm = function(showIt){
-      const w = document.getElementById('pw2wrap');
-      if (w) w.style.display = showIt ? '' : 'none';
-    };
-
-    // Google smart (popup o redirect según entorno)
     const googleProvider = new GoogleAuthProvider();
     function isStandalonePWA() {
-      return window.matchMedia('(display-mode: standalone)').matches ||
-             (window.navigator.standalone === true);
+      return window.matchMedia('(display-mode: standalone)').matches || (window.navigator.standalone === true);
     }
     async function signInGoogleSmart() {
       await applyPersistence();
       try {
-        if (isStandalonePWA()) {
-          await signInWithRedirect(auth, googleProvider);
-          return;
-        }
+        if (isStandalonePWA()) { await signInWithRedirect(auth, googleProvider); return; }
         await signInWithPopup(auth, googleProvider);
       } catch (e) {
-        const fallbackCodes = [
-          'auth/operation-not-supported-in-this-environment',
-          'auth/popup-blocked',
-        ];
-        if (fallbackCodes.includes(e.code)) {
-          await signInWithRedirect(auth, googleProvider);
-        } else {
-          alert('No se pudo iniciar con Google: ' + (e.message || e.code));
-          console.error(e);
-        }
+        const fallbackCodes = ['auth/operation-not-supported-in-this-environment','auth/popup-blocked',];
+        if (fallbackCodes.includes(e.code)) { await signInWithRedirect(auth, googleProvider); }
+        else { alert('No se pudo iniciar con Google: ' + (e.message || e.code)); console.error(e); }
       }
     }
     document.getElementById('google-btn')?.addEventListener('click', signInGoogleSmart);
 
-    // 👉 Modo registro
+    // 👁️ Ojo contraseña
+    function wirePasswordToggles(){
+      document.querySelectorAll('.pwd-toggle').forEach((btn)=>{
+        const input = document.getElementById(btn.getAttribute('data-target'));
+        if(!input) return;
+        btn.addEventListener('click', ()=>{
+          const show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          btn.classList.toggle('is-on', show);
+          btn.setAttribute('aria-pressed', String(show));
+          btn.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        });
+      });
+    }
+    wirePasswordToggles();
+    window.showConfirm = function(show){ const w = document.getElementById('pw2wrap'); if (w) w.style.display = show ? '' : 'none'; };
+
+    // Registro clásico
     let registering = false;
     const pass2 = document.getElementById('password2');
     const submitBtn = document.getElementById('submitBtn');
     const registerBtn = document.getElementById('registerBtn');
-
     function toggleRegisterMode(on){
       registering = !!on;
-      // Mostrar/ocultar wrapper del confirmar
-      window.showConfirm(registering);
-      if (submitBtn)  submitBtn.textContent  = registering ? 'Crear cuenta' : 'Entrar';
+      if (pass2) pass2.style.display = registering ? 'block' : 'none';
+      if (submitBtn) submitBtn.textContent = registering ? 'Crear cuenta' : 'Entrar';
       if (registerBtn) registerBtn.textContent = registering ? 'Cancelar' : 'Crear cuenta';
     }
     registerBtn?.addEventListener('click', ()=> toggleRegisterMode(!registering));
 
-    // Login / Registro
     document.getElementById('login-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       await applyPersistence();
@@ -325,7 +411,7 @@
       if (!registering) {
         await signInWithEmailAndPassword(auth, email, pass);
       } else {
-        const p2 = (pass2?.value || '').trim();
+        const p2 = pass2?.value.trim() || '';
         if (pass !== p2) { alert('Las contraseñas no coinciden'); return; }
         await createUserWithEmailAndPassword(auth, email, pass);
         alert('¡Cuenta creada! Bienvenido/a 👋');
@@ -335,21 +421,16 @@
 
     document.getElementById('logoutBtn')?.addEventListener('click', () => signOut(auth));
 
-    // ✅ Cerrar splash cuando Firebase contesta
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        show('app');
-      } else {
-        show('login');
-      }
+      show(user ? 'app' : 'login');
       if (window.showConfirm) window.showConfirm(false);
     });
   </script>
 
-  <!-- 2) dataStore (usa la app ya creada) -->
+  <!-- dataStore -->
   <script type="module" src="firestore-data.js"></script>
 
-  <!-- 3) Tu app (usa window.dataStore) -->
-  <script src="app.js?v=41"></script>
+  <!-- App -->
+  <script src="app.js?v=42menu"></script>
 </body>
 </html>
