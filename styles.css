@@ -90,97 +90,195 @@ canvas{width:100%;height:220px;background:#0f1116;border-radius:12px;border:1px 
   .cats-new > :nth-child(3), .cats-new > :nth-child(4){grid-column:1/-1;}
 }
 
-/* v41.1 — Toggle look para #rememberToggle */
+/* v41.1 — Solo look de toggle para #rememberToggle */
 .switch-card #rememberToggle{
   -webkit-appearance: none;
   appearance: none;
-  width: 44px; height: 26px; border-radius: 999px;
-  background: #2a2e37; border: 1px solid var(--border);
-  position: relative; outline: none;
-  transition: background .2s ease, border-color .2s ease; vertical-align: middle;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: #2a2e37;
+  border: 1px solid var(--border);
+  position: relative;
+  outline: none;
+  transition: background .2s ease, border-color .2s ease;
+  vertical-align: middle;
 }
 .switch-card #rememberToggle::after{
-  content:''; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%;
-  background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.35); transition: transform .2s ease;
+  content:'';
+  position:absolute;
+  top:2px;
+  left:2px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.35);
+  transition: transform .2s ease;
 }
-.switch-card #rememberToggle:checked{ background: var(--accent); border-color:#1e8f6b; }
-.switch-card #rememberToggle:checked::after{ transform: translateX(18px); }
-
-/* Marca login */
-.login-hero{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; }
-.login-hero img{ width: clamp(96px, 28vw, 180px); height:auto; display:block; filter: drop-shadow(0 6px 18px rgba(0,0,0,.25)); }
-.login-hero h1{ margin:0; font-size:clamp(20px, 3.8vw, 26px); line-height:1.2; text-align:center; }
-
-/* Ajustes tamaño toggle y botones login */
+.switch-card #rememberToggle:checked{
+  background: var(--accent);
+  border-color:#1e8f6b;
+}
+.switch-card #rememberToggle:checked::after{
+  transform: translateX(18px);
+}
+/* Marca de login (logo + título) */
+.login-hero{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+.login-hero img{
+  width: clamp(96px, 28vw, 180px);
+  height:auto;
+  display:block;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.25));
+}
+.login-hero h1{
+  margin:0;
+  font-size:clamp(20px, 3.8vw, 26px);
+  line-height:1.2;
+  text-align:center;
+}
+/* === Ajuste de tamaño del toggle para igualar a los botones === */
 .login-row{ display:flex; gap:8px; align-items:center; }
-.switch-card{ display:inline-flex; align-items:center; gap:10px; height:40px; padding:0 14px; border:1px solid var(--border); border-radius:10px; background:#0f1116; font-weight:600; line-height:1; }
-.switch-card input{ appearance:none; width:42px; height:22px; position:relative; border:1px solid var(--border); border-radius:999px; background:#0b0c0f; box-shadow:inset 0 0 0 2px rgba(0,0,0,.15); outline:none; transition:background .2s, border-color .2s; }
-.switch-card input::before{ content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#e9edf5; box-shadow:0 1px 3px rgba(0,0,0,.35); transition:transform .2s; }
+.switch-card{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  height:40px;
+  padding:0 14px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#0f1116;
+  font-weight:600;
+  line-height:1;
+}
+.switch-card input{
+  appearance:none;
+  width:42px; height:22px;
+  position:relative;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#0b0c0f;
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.15);
+  outline:none;
+  transition:background .2s, border-color .2s;
+}
+.switch-card input::before{
+  content:'';
+  position:absolute; top:2px; left:2px;
+  width:18px; height:18px; border-radius:50%;
+  background:#e9edf5;
+  box-shadow:0 1px 3px rgba(0,0,0,.35);
+  transition:transform .2s;
+}
 .switch-card input:checked{ background:var(--accent); border-color:#1e8f6b; }
 .switch-card input:checked::before{ transform:translateX(20px); }
 .switch-card span{ white-space:nowrap; }
-.login-row button, .login-row label.switch-card { height: 40px; display: flex; align-items: center; justify-content: center; padding: 0 12px; box-sizing: border-box; }
-.login-row label.switch-card { border: 1px solid var(--border); border-radius: 8px; background-color: transparent; gap: 8px; }
+.login-row button,
+.login-row label.switch-card {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+.login-row label.switch-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: transparent;
+    gap: 8px;
+}
 
-/* Ojo contraseña — versión final sin fondo/borde, solo ícono */
-.input-wrap{ position: relative; display: flex; align-items: center; }
-.input-wrap .control{ width:100%; padding-right: 44px; box-sizing: border-box; }
-.pwd-toggle{ all: unset; position:absolute; right:10px; top:50%; transform:translateY(-50%); width:28px; height:28px; display:grid; place-items:center; cursor:pointer; color:#8b94a7; }
+/* ===== Password eye (login) ===== */
+.input-wrap{ position:relative; display:flex; align-items:center; }
+.input-wrap .control{ width:100%; padding-right:44px; box-sizing:border-box; }
+.pwd-toggle{ all:unset; position:absolute; right:10px; top:50%; transform:translateY(-50%); width:28px; height:28px; display:grid; place-items:center; cursor:pointer; color:#8b94a7; }
 .pwd-toggle:hover{ color:#cbd5e1; }
 .pwd-toggle.is-on{ color:var(--accent); }
 .pwd-toggle:focus-visible{ outline:2px solid var(--border); outline-offset:2px; }
 .pwd-toggle svg{ display:block; pointer-events:none; }
 
-/* Botón Google */
-.btn-google{ appearance:none; -webkit-appearance:none; display:inline-flex; align-items:center; justify-content:center; gap:12px; height:44px; padding:0 16px; border:1px solid #dadce0; border-radius:4px; background:#fff; color:#3c4043; font-weight:600; line-height:1; cursor:pointer; transition:border-color .15s, box-shadow .15s, transform .02s; }
-.btn-google .g-icon{display:inline-flex;} .btn-google svg{display:block;}
+/* === Botón Google (estilo) === */
+.btn-google{
+  appearance:none;
+  -webkit-appearance:none;
+  display:inline-flex; align-items:center; justify-content:center; gap:12px;
+  height:44px; padding:0 16px; border:1px solid #dadce0; border-radius:4px;
+  background:#fff; color:#3c4043; font-weight:600; line-height:1; cursor:pointer;
+  transition:border-color .15s, box-shadow .15s, transform .02s;
+}
+.btn-google .g-icon{display:inline-flex;}
+.btn-google svg{display:block;}
 .btn-google:hover{ border-color:#c7c9cc; box-shadow:0 1px 1px rgba(0,0,0,.06); }
 .btn-google:active{ transform:translateY(1px); }
 .btn-google:focus-visible{ outline:3px solid #8ab4f8; outline-offset:2px; }
 .login-row .btn-google{ background:#fff; }
-@media (max-width: 420px){ .login-row{ gap:10px; } .btn-google{ flex:1 1 auto; } }
+@media (max-width: 420px){
+  .login-row{ gap:10px; }
+  .btn-google{ flex:1 1 auto; }
+}
 
-/* Micro interacción botones */
-button, .switch-card{ transition: background .2s ease, border-color .2s ease, transform .15s ease; }
-button:hover, .switch-card:hover{ transform: translateY(-1px); }
-button.primary{ background-color:#26a27b; } button.primary:hover{ background-color:#2bc08f; }
+/* Unificación hover */
+.google-icon-btn{ background:transparent; border:1px solid rgba(255,255,255,0.1); padding:6px 10px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .2s ease, border-color .2s ease; }
+.google-icon-btn:hover{ background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.2); }
+.google-icon-btn svg{ display:block; width:20px; height:20px; }
 
-/* Swipe feedback base */
+button, .switch-card { transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
+button:hover, .switch-card:hover { transform: translateY(-1px); }
+button.primary{ background-color:#26a27b; }
+button.primary:hover{ background-color:#2bc08f; }
+
+/* Swipe feedback genérico */
 .item{ touch-action: pan-y; will-change: transform; transition: transform .18s ease; }
 .item.swipe-hint-left  { box-shadow: inset -6px 0 0 rgba(247, 37, 133, .35); }
 .item.swipe-hint-right { box-shadow: inset  6px 0 0 rgba(76, 201, 240, .35); }
 
-/* Swipe reveal (capas) */
+/* --- Swipe cell (estructura “nueva”, por compatibilidad) --- */
 .swipe-cell{ position:relative; overflow:hidden; }
 .swipe-actions{ position:absolute; inset:0 auto 0 0; display:flex; align-items:center; gap:8px; padding:0 10px; pointer-events:none; }
 .swipe-actions.right{ right:0; left:auto; justify-content:flex-end; }
-.swipe-actions.left { left:0;  right:auto; justify-content:flex-start; }
-.swipe-actions .act{ pointer-events:auto; height:44px; padding:0 14px; border-radius:10px; font-weight:700; border:1px solid var(--border); box-shadow:var(--shadow); }
+.swipe-actions.left { left:0; right:auto;  justify-content:flex-start; }
+.swipe-actions .act{ pointer-events:auto; display:flex; align-items:center; justify-content:center; height:44px; padding:0 14px; border-radius:10px; font-weight:700; border:1px solid var(--border); box-shadow:var(--shadow); }
 .swipe-actions .act.edit{ background:#28b487; color:#041d14; border-color:#1e8f6b; }
 .swipe-actions .act.delete{ background:#ff6b6b; color:#310a0a; border-color:#b84e4e; }
 .item.swipe-foreground{ position:relative; z-index:2; transition:transform .25s cubic-bezier(.22,.61,.36,1); touch-action:pan-y; will-change:transform; }
 @keyframes popIn { from{transform:translateY(6px);opacity:0} to{transform:translateY(0);opacity:1} }
 .item.just-added{ animation:popIn .28s ease-out; }
 
-/* Íconos / botones del menú lateral */
+/* === Fix ojo password: inmutable en tap === */
+.pwd-toggle:hover,
+.pwd-toggle:active,
+.pwd-toggle:focus { transform: translateY(-50%); box-shadow:none; filter:none; }
+
+/* === Menú lateral === */
 .icon-btn{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:#121417; cursor:pointer; margin-left:8px; }
 .icon-btn:hover{ transform:translateY(-1px); transition:transform .15s ease; }
-
-.drawer{ position: fixed; inset: 0 0 0 auto; width: 84vw; max-width: 360px; background: #0e1013; border-left:1px solid rgba(255,255,255,.06); transform: translateX(100%); transition: transform .22s ease; display:flex; flex-direction:column; z-index: 9999; }
-.drawer.open{ transform: translateX(0); }
+.drawer{ position:fixed; inset:0 0 0 auto; width:84vw; max-width:360px; background:#0e1013; border-left:1px solid rgba(255,255,255,.06); transform:translateX(100%); transition:transform .22s ease; display:flex; flex-direction:column; z-index:9999; }
+.drawer.open{ transform:translateX(0); }
 .drawer-head{ display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid rgba(255,255,255,.06); }
 .drawer-body{ padding:8px; display:flex; flex-direction:column; gap:8px; }
 .drawer-item{ text-align:left; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:#14171c; color:#e9edf5; cursor:pointer; }
 .drawer-item:hover{ transform: translateY(-1px); }
-.drawer-mask{ position: fixed; inset:0; background: rgba(0,0,0,.45); backdrop-filter: blur(1.5px); z-index: 9998; }
-
-/* Toggle de tema (bombillo) */
+.drawer-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter: blur(1.5px); z-index:9998; }
 .theme-toggle{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
 .theme-toggle input{ display:none; }
 .theme-toggle .bulb{ width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.08); background:#121417; }
 .theme-toggle .lbl{ font-size:14px; opacity:.9; }
+.theme-light body{ background:#ffffff; color:#111; }
 
-/* Modal categorías */
+/* Ítems del menú */
+.menu-item { width:100%; text-align:left; padding:10px 12px; border-radius:12px; background:#1c1f24; border:1px solid #2a2f36; color:#e8edf3; }
+.menu-item:hover { filter:brightness(1.06); }
+.menu-item.danger { background:#3a1010; border-color:#5a1a1a; color:#ff6b6b; }
+
+/* Modal de categorías */
 .modal[hidden]{display:none;}
 .modal { position:fixed; inset:0; z-index:1000; }
 .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.45); }
@@ -189,9 +287,22 @@ button.primary{ background-color:#26a27b; } button.primary:hover{ background-col
 .modal-body { overflow:auto; padding:8px 10px; }
 .modal .icon-btn { width:32px; height:32px; border-radius:10px; }
 
-/* --- FIX notch iPhone: header del menú lateral --- */
-.sidepanel .panel-header{
-  /* añade la altura del safe‑area + tu padding existente */
-  padding-top: calc(env(safe-area-inset-top, 0px) + 16px) !important;
+/* Botón Google: evita heredar colores de estados .danger, etc. */
+#glogin, #google-btn { color:inherit; }
+.gbtn .gmark path { stroke:none !important; }
+
+/* ========================= */
+/* === FIXES SOLICITADOS === */
+/* ========================= */
+
+/* 1) Color del icono “bombillo” igual al texto Menú */
+#themeToggle{
+  color: var(--text) !important;    /* mismo color que el h3 “Menú” */
 }
-/* (no cambia nada fuera del panel) */
+
+/* 2) Swipe: asegurar que las acciones queden debajo y no “asomen” */
+.item-cell{ position:relative; overflow:hidden; border-radius:12px; }
+.item-actions{ position:absolute; inset:0; z-index:1; }
+.item-content{ position:relative; z-index:2; width:100%; box-sizing:border-box; }
+.list .item{ width:100%; }          /* la tarjeta ocupa todo el ancho */
+/* ========================= */

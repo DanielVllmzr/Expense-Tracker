@@ -13,14 +13,8 @@
   <link rel="stylesheet" href="styles.css">
   <meta name="apple-mobile-web-app-title" content="Expense Tracker">
 
-  <!-- Ajustes mínimos sin tocar tu CSS principal -->
   <style>
-    :root{
-      --accent:#27b386; /* verde principal coherente con tu “Agregar” */
-      --panel-w: min(360px, 85vw);
-    }
-
-    /* Topbar: botón de fecha “con icono” y botón menú verde */
+    :root{ --accent:#27b386; --panel-w:min(360px,85vw); }
     .topbar .right{ display:flex; gap:8px; align-items:center; }
     .pill, .control{ height:36px; }
     .with-icon{ display:inline-flex; align-items:center; gap:.5rem; }
@@ -40,6 +34,7 @@
       position:fixed; inset:0; background:rgba(0,0,0,.35);
       backdrop-filter:saturate(120%) blur(2px);
       opacity:0; pointer-events:none; transition:opacity .18s ease;
+      z-index:70; /* debajo del panel */
     }
     .sidepanel-mask.show{ opacity:1; pointer-events:auto; }
 
@@ -56,42 +51,20 @@
     }
     .panel-header h3{ margin:0; font-size:18px; }
     .panel-actions{ padding:12px; display:grid; gap:10px; }
-    .panel-actions .danger{
-      background:#752b2b; border:1px solid #a33d3d; color:#fff;
-    }
+    .panel-actions .danger{ background:#752b2b; border:1px solid #a33d3d; color:#fff; }
 
-    /* Bombillo toggle */
+    /* Botón bombillo: mantiene tamaño, usa PNG */
     #themeToggle{
       display:inline-flex; align-items:center; justify-content:center;
       width:34px; height:34px; border-radius:10px;
       border:1px solid rgba(255,255,255,.08);
-      background:#12161b; color:#cfd6de;
+      background:#12161b;
     }
-    #themeToggle svg{ width:20px; height:20px; }
-    #themeToggle .rays{ opacity:.0; transition:opacity .15s ease; }
-    #themeToggle.on .rays{ opacity:1; } /* “rayitas” visibles en modo claro */
-
-    /* ===== Swipe reveal (estructura mínima) ===== */
-    .item-cell{ position:relative; overflow:hidden; border-radius:12px; }
-    .item-actions{
-      position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center;
-      padding:0 10px; pointer-events:none;
-    }
-    .item-actions .action{
-      pointer-events:auto;
-      width:48px; height:36px; border-radius:10px; border:1px solid rgba(0,0,0,.2);
-      display:inline-flex; align-items:center; justify-content:center; color:#fff;
-    }
-    .item-actions .edit{ background:var(--accent); border-color:#1d6d58; }
-    .item-actions .del{ background:#d44; border-color:#a33; }
-    .item-content{ position:relative; z-index:2; transition:transform .18s ease; }
-
-    /* Popover de categorías: por si quieres que “salte arriba” */
-    #catsPanel{ position:relative; z-index:85; }
+    #themeToggle img{ width:20px; height:20px; object-fit:contain; image-rendering:-webkit-optimize-contrast; }
   </style>
 </head>
 <body>
-  <!-- Splash de arranque -->
+  <!-- Splash -->
   <section id="boot" class="boot">
     <div class="loader"></div>
     <div class="small" style="margin-top:10px;opacity:.7;">Cargando…</div>
@@ -106,8 +79,6 @@
 
     <form id="login-form" class="login-form">
       <input id="email" name="email" type="email" placeholder="Email" required class="control" />
-
-      <!-- Contraseña + ojo -->
       <div class="input-wrap">
         <input id="password" name="password" type="password" placeholder="Contraseña" required class="control" />
         <button type="button" class="pwd-toggle" data-target="password" aria-label="Mostrar contraseña">
@@ -147,26 +118,21 @@
 
   <!-- APP -->
   <section id="app" style="display:none;">
-
     <div class="ptr" id="ptr"><div class="bubble">↻</div></div>
 
     <header>
       <div class="topbar">
         <h1>Gastos</h1>
         <div class="right">
-          <!-- Botón de fecha con icono -->
           <button id="dateBtn" class="control pill with-icon" type="button" title="Elegir fecha">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9ZM6 6H4v2h16V6h-2V7a1 1 0 1 1-2 0V6H8v1a1 1 0 0 1-2 0V6Z"/>
             </svg>
             <span id="dateBtnTxt">—</span>
           </button>
-          <!-- input real (oculto) para el picker nativo -->
-          <input id="datePicker" class="control" type="date" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;">
+          <input id="datePicker" class="control" type="date" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
           <button class="control" id="todayBtn">Hoy</button>
           <button class="control" id="monthBtn">Mes</button>
-
-          <!-- Botón menú -->
           <button id="menuBtn" class="control" type="button" aria-label="Menú">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 7.5h16M4 12h16M4 16.5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
@@ -174,6 +140,7 @@
           </button>
         </div>
       </div>
+
       <div class="summary">
         <div class="card">
           <div class="period" id="period">Día: —</div>
@@ -267,8 +234,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Footer eliminado para evitar cualquier solape -->
   </section>
 
   <!-- Panel lateral + overlay -->
@@ -276,20 +241,9 @@
   <aside id="sideMenu" class="sidepanel" aria-hidden="true">
     <div class="panel-header">
       <h3>Menú</h3>
+      <!-- Botón de tema con PNG -->
       <button id="themeToggle" type="button" title="Modo claro/oscuro" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3a6 6 0 0 1 6 6c0 2.7-1.8 5-4.3 5.7V17a1.7 1.7 0 0 1-3.4 0v-2.3A6 6 0 0 1 12 3Z" fill="currentColor"/>
-          <g class="rays" fill="currentColor">
-            <circle cx="12" cy="1.8" r="1"/>
-            <circle cx="12" cy="22.2" r="1"/>
-            <circle cx="1.8" cy="12" r="1"/>
-            <circle cx="22.2" cy="12" r="1"/>
-            <circle cx="4.2" cy="4.2" r="1"/>
-            <circle cx="19.8" cy="19.8" r="1"/>
-            <circle cx="19.8" cy="4.2" r="1"/>
-            <circle cx="4.2" cy="19.8" r="1"/>
-          </g>
-        </svg>
+        <img id="themeIcon" src="icons/bulb-dark.png" alt="Tema" width="20" height="20">
       </button>
     </div>
     <nav class="panel-actions">
@@ -299,7 +253,7 @@
     </nav>
   </aside>
 
-  <!-- Firebase + app -->
+  <!-- Firebase + app básica -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
     import {
@@ -339,7 +293,6 @@
     }
     show('boot');
 
-    // Persistencia
     const rememberToggle = document.getElementById('rememberToggle');
     rememberToggle.checked = localStorage.getItem('rememberLogin') === '1';
     async function applyPersistence(){
@@ -368,7 +321,6 @@
     }
     document.getElementById('google-btn')?.addEventListener('click', signInGoogleSmart);
 
-    // 👁️ Ojo contraseña
     function wirePasswordToggles(){
       document.querySelectorAll('.pwd-toggle').forEach((btn)=>{
         const input = document.getElementById(btn.getAttribute('data-target'));
@@ -385,7 +337,6 @@
     wirePasswordToggles();
     window.showConfirm = function(show){ const w = document.getElementById('pw2wrap'); if (w) w.style.display = show ? '' : 'none'; };
 
-    // Registro clásico
     let registering = false;
     const pass2 = document.getElementById('password2');
     const submitBtn = document.getElementById('submitBtn');
@@ -422,10 +373,7 @@
     });
   </script>
 
-  <!-- dataStore -->
   <script type="module" src="firestore-data.js"></script>
-
-  <!-- App -->
-  <script src="app.js?v=42menu"></script>
+  <script src="app.js?v=42-bulb-fix"></script>
 </body>
 </html>

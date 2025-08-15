@@ -1,4 +1,4 @@
-// app.js (stable, sin footer)
+// app.js (estable, fixes fecha + listeners menú)
 const META_KEY='gastos.meta.v6';
 const DEFAULT_CATS=[
   {key:'todas',name:'Todas',color:'#28b487'},
@@ -33,12 +33,16 @@ saveMeta();
 const seenIds = new Set();
 
 function saveMeta(){ localStorage.setItem(META_KEY, JSON.stringify(meta)); }
+
+/* ===== Helpers de fecha (sin UTC) ===== */
 function toYMD(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
 function toYM(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}`; }
+function parseYMD(ymd){ const [y,m,d]=ymd.split('-').map(Number); return new Date(y,(m||1)-1,(d||1)); }
 function todayYMD(){ return toYMD(new Date()); }
 function localYMDfromISO(iso){ return toYMD(new Date(iso)); }
+function fmtDateBtn(ymd){ const [y,m,d]=ymd.split('-').map(Number); return `${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}/${y}`; }
+
 function formatMoney(n){ const val=Number(n||0); return '$'+val.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmtDateBtn(ymd){ const d=new Date(ymd); const mm=String(d.getMonth()+1).padStart(2,'0'); const dd=String(d.getDate()).padStart(2,'0'); return `${mm}/${dd}/${d.getFullYear()}`; }
 
 // refs
 const amountEl=document.getElementById('amount');
@@ -76,9 +80,14 @@ const sideMenu=document.getElementById('sideMenu');
 const sideMask=document.getElementById('sideMask');
 const menuBtn=document.getElementById('menuBtn');
 const themeToggle=document.getElementById('themeToggle');
+const themeIcon=document.getElementById('themeIcon');
 const menuExport=document.getElementById('menuExport');
 const menuCats=document.getElementById('menuCats');
 const menuLogout=document.getElementById('menuLogout');
+
+// rutas de iconos
+const ICON_DARK='icons/bulb-dark.png';   // sin rayitas
+const ICON_LIGHT='icons/bulb-light.png'; // con rayitas
 
 // filtros
 let activeCat=null, typeFilter='all', addType='expense';
@@ -199,7 +208,11 @@ function render(){
   monthBtn.textContent = meta.viewMode==='month' ? 'Día' : 'Mes';
   datePicker.value = meta.selectedDate;
   if (dateBtnTxt) dateBtnTxt.textContent = fmtDateBtn(meta.selectedDate);
-  periodEl.textContent = meta.viewMode==='month' ? `Mes: ${toYM(new Date(meta.selectedDate))}` : `Día: ${meta.selectedDate}`;
+
+  // 🔧 usa parseYMD para evitar UTC-shift
+  periodEl.textContent = meta.viewMode==='month'
+    ? `Mes: ${toYM(parseYMD(meta.selectedDate))}`
+    : `Día: ${meta.selectedDate}`;
 
   const rf=meta.rangeFilter||{}; const start=rf.start?new Date(rf.start):null; const end=rf.end?new Date(rf.end):null;
   const filtered=records.filter(r=>{
@@ -207,7 +220,7 @@ function render(){
       if(localYMDfromISO(r.createdAt)!==meta.selectedDate) return false;
     } else {
       const ym=toYM(new Date(r.createdAt));
-      if(ym!==toYM(new Date(meta.selectedDate))) return false;
+      if(ym!==toYM(parseYMD(meta.selectedDate))) return false; // 🔧
     }
     if(activeCat && r.category!==activeCat) return false;
     if(typeFilter==='income' && r.type!=='income') return false;
@@ -337,10 +350,7 @@ function updateBudgetAdvice(){
 /* ===== Fecha ===== */
 datePicker.value = meta.selectedDate;
 if (dateBtnTxt) dateBtnTxt.textContent = fmtDateBtn(meta.selectedDate);
-dateBtn.onclick=()=>{
-  try{ datePicker.showPicker?.(); }catch{ /* iOS */ }
-  datePicker.focus(); datePicker.click();
-};
+dateBtn.onclick=()=>{ try{ datePicker.showPicker?.(); }catch{} datePicker.focus(); datePicker.click(); };
 datePicker.onchange=()=>{ meta.selectedDate=datePicker.value||todayYMD(); saveMeta(); render(); };
 todayBtn.onclick=()=>{ meta.selectedDate=todayYMD(); datePicker.value=meta.selectedDate; saveMeta(); render(); };
 monthBtn.onclick=()=>{ meta.viewMode = (meta.viewMode==='month'?'day':'month'); saveMeta(); render(); };
@@ -439,21 +449,22 @@ menuBtn?.addEventListener('click', toggleMenu);
 sideMask?.addEventListener('click', closeMenu);
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
 
+/* ===== Bombillo PNG: alterna imagen (no toca el tema global) ===== */
+function setThemeIcon(on){
+  // on=true => modo claro (con rayitas)
+  if(themeIcon) themeIcon.src = on ? ICON_LIGHT : ICON_DARK;
+  themeToggle?.setAttribute('aria-pressed', String(on));
+}
+setThemeIcon(false); // estado inicial: oscuro (sin rayitas)
 themeToggle?.addEventListener('click', ()=>{
-  const on=!themeToggle.classList.contains('on');
-  themeToggle.classList.toggle('on', on);
-  themeToggle.setAttribute('aria-pressed', String(on));
+  const next = themeToggle.getAttribute('aria-pressed') !== 'true';
+  setThemeIcon(next);
 });
 
-menuExport?.addEventListener('click', ()=>{ closeMenu(); setTimeout(()=>exportBtn.click(), 180); });
-menuCats?.addEventListener('click', ()=>{
-  closeMenu();
-  setTimeout(()=>{ if(catsPanel.hasAttribute('hidden')) catsPanel.removeAttribute('hidden'); catsPanel.scrollIntoView({behavior:'smooth'}); }, 200);
-});
-menuLogout?.addEventListener('click', ()=>{
-  closeMenu();
-  setTimeout(()=>document.getElementById('logoutBtn')?.click(), 120);
-});
+/* ===== Listeners de acciones del MENÚ lateral ===== */
+menuExport?.addEventListener('click', (e)=>{ e.stopPropagation(); closeMenu(); setTimeout(()=>exportBtn.click(), 120); });
+menuCats  ?.addEventListener('click', (e)=>{ e.stopPropagation(); closeMenu(); setTimeout(()=>{ if(catsPanel.hasAttribute('hidden')) catsPanel.removeAttribute('hidden'); catsPanel.scrollIntoView({behavior:'smooth'}); }, 150); });
+menuLogout?.addEventListener('click', (e)=>{ e.stopPropagation(); closeMenu(); setTimeout(()=>document.getElementById('logoutBtn')?.click(), 120); });
 
 /* ===== Realtime ===== */
 function startRealtime(){
