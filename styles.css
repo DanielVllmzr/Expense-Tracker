@@ -1,6 +1,8 @@
 :root{
   --bg:#0b0c0f; --card:#14161b; --muted:#8b94a7; --text:#e9edf5; --accent:#28b487;
   --chip-bg:#1b2029; --danger:#ff6b6b; --border:#242a36; --shadow:0 8px 20px rgba(0,0,0,.35);
+  /* === añadido: safe-area iOS === */
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,Arial,sans-serif;}
@@ -262,6 +264,12 @@ button.primary:hover{ background-color:#2bc08f; }
 .icon-btn:hover{ transform:translateY(-1px); transition:transform .15s ease; }
 .drawer{ position:fixed; inset:0 0 0 auto; width:84vw; max-width:360px; background:#0e1013; border-left:1px solid rgba(255,255,255,.06); transform:translateX(100%); transition:transform .22s ease; display:flex; flex-direction:column; z-index:9999; }
 .drawer.open{ transform:translateX(0); }
+/* === añadido: safe-area para headers de panel/drawer === */
+.sidepanel .panel-header,
+.drawer-head{
+  padding-top: calc(16px + var(--safe-top)) !important; /* empuja por debajo del notch */
+}
+
 .drawer-head{ display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid rgba(255,255,255,.06); }
 .drawer-body{ padding:8px; display:flex; flex-direction:column; gap:8px; }
 .drawer-item{ text-align:left; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:#14171c; color:#e9edf5; cursor:pointer; }
